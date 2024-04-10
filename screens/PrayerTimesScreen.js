@@ -33,26 +33,29 @@ export default function PrayerTimesScreen() {
       startCountdown(next[1] - currentSeconds);
     } else {
       setNextPrayer('Imsak');
+      // TODO: Switch to next day's Imsak time
       startCountdown(prayerSeconds[0][1] + 24 * 3600 - currentSeconds);
     }
   }
 
   const startCountdown = (timeToNextPrayer) => {
-    let totalSeconds = timeToNextPrayer;
+    clearInterval(countdownRef.current);
 
-    const countdown = setInterval(() => {
-      totalSeconds--;
+    countdownRef.current = setInterval(() => {
+      timeToNextPrayer--;
 
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = (totalSeconds % 60);
+      if (timeToNextPrayer <= 0) {
+        clearInterval(countdownRef.current);
+        getNextPrayer();
+        return;
+      }
+
+      const hours = Math.floor(timeToNextPrayer / 3600);
+      const minutes = Math.floor((timeToNextPrayer % 3600) / 60);
+      const seconds = (timeToNextPrayer % 60);
 
       const formattedTime = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-      setTimeToNextPrayer(`${formattedTime}`);
-
-      if (totalSeconds === 0) {
-        clearInterval(countdown);
-      }
+      setTimeToNextPrayer(formattedTime);
     }, 1000);
 
     return countdownRef.current;
@@ -60,7 +63,8 @@ export default function PrayerTimesScreen() {
 
   const changeDay = (direction) => {
     const month = new Date().getMonth();
-    if (selectedDay + direction < 1 || selectedDay + direction >= new Date(new Date().getFullYear(), month + 1, 0).getDate()) {
+    const day = new Date().getDate();
+    if (day + selectedDay + direction < 1 || day + selectedDay + direction > new Date(new Date().getFullYear(), month + 1, 0).getDate()) {
       return;
     }
     setSelectedDay(selectedDay + direction);
@@ -87,19 +91,22 @@ export default function PrayerTimesScreen() {
   };
 
   const getStelarPosition = () => {
-    let props;
-    if (nextPrayer === 'Dhuhr') {
-      props = {source: sunIcon, style: {...styles.stelar, left: '-10%', top: '15%'}};
-    } else if (nextPrayer === 'Asr') {
-      props = {source: sunIcon, style: {...styles.stelar, left: '40%', top: '5%'}};
-    } else if (nextPrayer === 'Maghrib') {
-      props = {source: sunIcon, style: {...styles.stelar, right: '-10%', top: '15%'}};
-    } else {
-      props = {source: sunIcon, style: {...styles.stelar, left: '0%', top: '0%'}};
-      //props = {source: moonIcon, style: {...styles.stelar, left: '40%', top: '5%'}};
+    // TODO: Fix height positioning
+    let style;
+    switch (nextPrayer) {
+      case 'Dhuhr':
+        style = { alignSelf: 'flex-start' };
+        return { source: sunIcon, style: style };
+      case 'Asr':
+        style = { alignSelf: 'center' };
+        return { source: sunIcon, style: style };
+      case 'Maghrib':
+        style = { alignSelf: 'flex-end' };
+        return { source: sunIcon, style: style };
+      default:
+        style = { alignSelf: 'center' };
+        return { source: moonIcon, style: style };
     }
-
-    return props;
   };
 
   useEffect(() => {
@@ -154,9 +161,11 @@ export default function PrayerTimesScreen() {
   return (
     <LinearGradient {...linearGradientProps()}>
       <StatusBar style="auto" />
+
       <View style={styles.container}>
+
         <View style={styles.celestialContainer}>
-          <Image source={celestialBody.source} style={celestialBody.style} />
+          <Image source={celestialBody.source} style={[styles.stelar, celestialBody.style]} />
         </View>
 
         <View style={styles.dateRow}>
@@ -212,6 +221,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 20,
     marginBottom: 20,
   },
   date: {
@@ -225,7 +235,7 @@ const styles = StyleSheet.create({
   prayerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   prayer: {
     fontSize: 20,
@@ -253,14 +263,13 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   celestialContainer: {
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 20,
-    paddingBottom: 10,
   },
   stelar: {
-    //position: 'absolute',
     width: 100,
     height: 100,
+    resizeMode: 'contain',
   }
 });
