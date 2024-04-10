@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, ImageBackground } from 'react-native';
-import * as Location from 'expo-location';
+import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'expo-vector-icons/MaterialCommunityIcons';
+import { FontAwesome } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import sunIcon from '../assets/sun.png';
+import moonIcon from '../assets/moon.png';
 
 export default function PrayerTimesScreen() {
   const [city, setCity] = useState('');
@@ -64,6 +66,42 @@ export default function PrayerTimesScreen() {
     setSelectedDay(selectedDay + direction);
   }
 
+  const linearGradientProps = () => {
+    let colors;
+    if (nextPrayer === 'Sunrise') {
+        colors = ['#c08423', '#aa7f81']
+    } else if (nextPrayer === 'Dhuhr') {
+        colors = ['#a8d1f6', '#bbdaff']
+    } else if (nextPrayer === 'Asr') {
+        colors = ['#75a1f8', '#2d59b5']
+    } else if (nextPrayer === 'Maghrib') {
+        colors = ['#fa9e66', '#f45c43']
+    } else {
+        colors = ['#12232b', '#3a4881']
+    }
+
+    return {
+      colors: colors,
+      style: styles.linearGradient
+    }
+  };
+
+  const getStelarPosition = () => {
+    let props;
+    if (nextPrayer === 'Dhuhr') {
+      props = {source: sunIcon, style: {...styles.stelar, left: '-10%', top: '15%'}};
+    } else if (nextPrayer === 'Asr') {
+      props = {source: sunIcon, style: {...styles.stelar, left: '40%', top: '5%'}};
+    } else if (nextPrayer === 'Maghrib') {
+      props = {source: sunIcon, style: {...styles.stelar, right: '-10%', top: '15%'}};
+    } else {
+      props = {source: sunIcon, style: {...styles.stelar, left: '0%', top: '0%'}};
+      //props = {source: moonIcon, style: {...styles.stelar, left: '40%', top: '5%'}};
+    }
+
+    return props;
+  };
+
   useEffect(() => {
     const fetchInfo = async () => {
       const city = await AsyncStorage.getItem('city');
@@ -112,85 +150,117 @@ export default function PrayerTimesScreen() {
     }
   }, [prayerTimes]);
 
+  const celestialBody = getStelarPosition();
   return (
-    //<View style={styles.container}>
-    <ImageBackground
-      source={require('../assets/background3.jpg')}
-      style={styles.container}
-    >
-      <Text style={styles.location}>{city}</Text>
-      <Text style={styles.nextPrayer}>Next prayer in {timeToNextPrayer}</Text>
-
-      <View style={styles.dateRow}>
-        <TouchableOpacity
-          onPress={() => changeDay(-1)}
-        >
-          <Icon name="chevron-left" size={24} color="#000" />
-        </TouchableOpacity>
-
-        <View>
-          <Text style={styles.date}>{gregorianDate}</Text>
-          <Text style={styles.date}>{hijriDate}</Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => changeDay(1)}
-        >
-          <Icon name="chevron-right" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-
-      {prayerTimes && Object.entries(prayerTimes).map(([prayer, time]) => (
-        <View key={prayer} style={styles.prayerRow}>
-          <Text style={styles.prayer}>{prayer}</Text>
-          <Text style={styles.time}>{time}</Text>
-        </View>
-      ))}
+    <LinearGradient {...linearGradientProps()}>
       <StatusBar style="auto" />
-    </ImageBackground>
-    //</View>
+      <View style={styles.container}>
+        <View style={styles.celestialContainer}>
+          <Image source={celestialBody.source} style={celestialBody.style} />
+        </View>
+
+        <View style={styles.dateRow}>
+          <TouchableOpacity
+            onPress={() => changeDay(-1)}
+          >
+            <FontAwesome name="angle-left" size={35} color="white" />
+          </TouchableOpacity>
+
+          <View>
+            <Text style={styles.date}>{gregorianDate}</Text>
+            <Text style={styles.date}>{hijriDate}</Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => changeDay(1)}
+          >
+            <FontAwesome name="angle-right" size={35} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.prayerContainer}>
+          {prayerTimes && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, time]) => (
+            <View key={prayer} style={styles.prayerRow}>
+              <Text style={styles.prayer}>{prayer}</Text>
+              <Text style={styles.time}>{time}</Text>
+            </View>
+          ))}
+        </View>
+        
+        <View style={styles.bottomRow}>
+          <Text style={styles.location}>{city}</Text>
+          <Text stlye={styles.separator}>|</Text>
+          <Text style={styles.nextPrayer}>Next prayer in {timeToNextPrayer}</Text>
+        </View>
+      </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  linearGradient: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f4f9f9'
-  },
-  location: {
-    fontFamily: 'OpenSans_400Regular',
-    fontSize: 20,
-    marginBottom: 8,
-    color: '#5e807f'
-  },
-  nextPrayer: {
-    fontSize: 20,
-    marginBottom: 16,
-    fontFamily: 'OpenSans_500Medium',
-    color: '#073935'
   },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24
+    marginBottom: 20,
   },
   date: {
+    color: 'white',
     textAlign: 'center',
     fontSize: 16
+  },
+  prayerContainer: {
+    flex: 1,
   },
   prayerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e1e1e1'
   },
   prayer: {
-    fontSize: 20
+    fontSize: 20,
+    color: 'white',
   },
   time: {
-    fontSize: 20
+    fontSize: 20,
+    color: 'white',
+  },
+  bottomRow:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  location: {
+    color: 'white',
+    fontSize: 16,
+  },
+  separator: {
+    color: 'white',
+    fontSize: 16,
+  },
+  nextPrayer: {
+    fontSize: 16,
+    color: 'white',
+  },
+  celestialContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  stelar: {
+    //position: 'absolute',
+    width: 100,
+    height: 100,
   }
 });
