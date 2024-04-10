@@ -3,10 +3,29 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import PrayerTimesScreen from './screens/PrayerTimesScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFonts, OpenSans_400Regular, OpenSans_300Light, OpenSans_500Medium, OpenSans_700Bold } from '@expo-google-fonts/open-sans';
+import * as SplashScreen from 'expo-splash-screen';
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+  useEffect(() => {
+    SplashScreen.preventAutoHideAsync();
+  }, []);
+
+  let [fontsLoaded] = useFonts({
+    OpenSans_400Regular,
+    OpenSans_300Light,
+    OpenSans_500Medium,
+    OpenSans_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   useEffect(() => {
     const getLocation = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -70,21 +89,25 @@ export default function App() {
     checkAladhan();
   }, []);
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <NavigationContainer>
       <Tab.Navigator 
         initialRouteName='PrayerTimes'
         screenOptions={{
-          tabBarActiveTintColor: '#0b3d91',
-          tabBarStyle: { backgroundColor: '#0b3d91' },
+          tabBarActiveTintColor: '#fff',
+          tabBarStyle: { backgroundColor: '#0e9d87' },
         }}
       >
         <Tab.Screen 
-          name='PrayerTimes' 
+          name='Prayer Times' 
           component={PrayerTimesScreen} 
           options={{
             tabBarLabel: 'Prayer Times',
-            tabBarActiveTintColor: 'white',
+            tabBarActiveTintColor: '#a0f0e0',
           }}  
         />
       </Tab.Navigator>
