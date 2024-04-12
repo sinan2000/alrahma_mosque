@@ -4,8 +4,17 @@ import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
+
+const weekPrayers = [
+  { time: 'FAJR', days: [false, true, false, true, false, true, false] },
+  { time: 'DHUHR', days: [true, true, true, true, false, false, true] },
+  { time: 'ASR', days: [true, true, true, true, true, true, true] },
+  { time: 'MAGHRIB', days: [true, true, true, true, true, true, true] },
+  { time: 'ISHA', days: [true, true, true, true, true, true, true] },
+]
 
 export default function PrayerTimesScreen() {
   const [city, setCity] = useState('');
@@ -33,10 +42,26 @@ export default function PrayerTimesScreen() {
       startCountdown(next[1] - currentSeconds);
     } else {
       setNextPrayer('Imsak');
-      // TODO: Switch to next day's Imsak time
-      startCountdown(prayerSeconds[0][1] + 24 * 3600 - currentSeconds);
+      nextImsak = getNextImsakTime();
+      startCountdown(nextImsak + 24 * 3600 - currentSeconds);
     }
   }
+
+  const getNextImsakTime = async () => {
+    const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
+    const date = new Date();
+    const day = date.getDate();
+    // TODO: Think of last day of month retrieval
+    if (length(data) < day) {
+      return;
+    }
+    const imsakTime = data[day].timings.Imsak.split(' ')[0];
+
+    const [hours, minutes] = imsakTime.split(':').map(Number);
+    const imsakSeconds = hours * 3600 + minutes * 60;
+
+    return imsakSeconds;
+  };
 
   const startCountdown = (timeToNextPrayer) => {
     clearInterval(countdownRef.current);
@@ -91,7 +116,7 @@ export default function PrayerTimesScreen() {
   };
 
   const getStelarPosition = () => {
-    // TODO: Fix height positioning
+    // TODO: Fix height positioning???
     let style;
     switch (nextPrayer) {
       case 'Dhuhr':
@@ -141,7 +166,22 @@ export default function PrayerTimesScreen() {
 
       const hijriInfo = data[day].date.hijri;
       setHijriDate(`${hijriInfo.day} ${hijriInfo.month.en} ${hijriInfo.year} ${hijriInfo.designation.abbreviated}`);
-      setGregorianDate(`${day + 1} ${date.toLocaleString('default', { month: 'long' })}`)
+
+      let prefix;
+      switch (selectedDay) {
+        case 0:
+          prefix = 'Today, ';
+          break;
+        case 1:
+          prefix = 'Tomorrow, ';
+          break;
+        case -1:
+          prefix = 'Yesterday, ';
+          break;
+        default:
+          prefix = '';
+      }
+      setGregorianDate(`${prefix}${day + 1} ${date.toLocaleString('default', { month: 'long' })}`)
     };
 
     fetchInfo();
@@ -166,6 +206,10 @@ export default function PrayerTimesScreen() {
 
         <View style={styles.celestialContainer}>
           <Image source={celestialBody.source} style={[styles.stelar, celestialBody.style]} />
+        </View>
+
+        <View style={styles.upperRow}>
+          <Text style={styles.location}>{city}</Text>
         </View>
 
         <View style={styles.dateRow}>
@@ -197,10 +241,10 @@ export default function PrayerTimesScreen() {
         </View>
         
         <View style={styles.bottomRow}>
-          <Text style={styles.location}>{city}</Text>
-          <Text stlye={styles.separator}>|</Text>
           <Text style={styles.nextPrayer}>Next prayer in {timeToNextPrayer}</Text>
         </View>
+
+        <PrayerGrid prayerTimes={weekPrayers} />
       </View>
     </LinearGradient>
   );
@@ -247,7 +291,12 @@ const styles = StyleSheet.create({
   },
   bottomRow:{
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  upperRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   location: {
@@ -271,5 +320,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     resizeMode: 'contain',
+    bottom: 0,
   }
 });

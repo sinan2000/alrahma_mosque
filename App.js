@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { useFonts, OpenSans_400Regular, OpenSans_300Light, OpenSans_500Medium, OpenSans_700Bold } from '@expo-google-fonts/open-sans';
@@ -100,8 +101,8 @@ export default function App() {
       <Tab.Navigator 
         initialRouteName='PrayerTimes'
         screenOptions={{
-          tabBarActiveTintColor: '#fff',
-          tabBarStyle: { backgroundColor: '#0e9d87' },
+          tabBarActiveTintColor: '#0e9d87',
+          tabBarStyle: { backgroundColor: '#f7f7f7' },
         }}
       >
         <Tab.Screen 
@@ -109,7 +110,18 @@ export default function App() {
           component={PrayerTimesScreen} 
           options={{
             tabBarLabel: 'Prayer Times',
-            tabBarActiveTintColor: '#a0f0e0',
+            tabBarActiveTintColor: '#0e9d87',
+            tabBarIcon: ({ focused, color, size }) => (
+              <Image 
+                source={require('./assets/islamic.png')}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: focused ? '#0e9d87' : color
+                }}
+              />
+            ),
+            tabBarActiveTintColor: '#0e9d87',
           }}  
         />
       </Tab.Navigator>
