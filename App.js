@@ -1,17 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import PrayerTimesScreen from './screens/PrayerTimesScreen';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts, OpenSans_400Regular, OpenSans_300Light, OpenSans_500Medium, OpenSans_700Bold } from '@expo-google-fonts/open-sans';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
+import LocalSplashScreen from './screens/SplashScreen';
+import PrayerTimesScreen from './screens/PrayerTimesScreen';
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
-  useEffect(() => {
-    SplashScreen.preventAutoHideAsync();
-  }, []);
+  const [isSplashScreenVisible, setSplashScreenVisibility] = useState(true);
 
   let [fontsLoaded] = useFonts({
     OpenSans_400Regular,
@@ -21,10 +20,13 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
+    SplashScreen.preventAutoHideAsync();
+
+    setTimeout(() => {
+      setSplashScreenVisibility(false);
       SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
+    }, 200); // TODO: Change to 1500
+  }, []);
 
   useEffect(() => {
     const getLocation = async () => {
@@ -89,8 +91,8 @@ export default function App() {
     checkAladhan();
   }, []);
 
-  if (!fontsLoaded) {
-    return null;
+  if (!fontsLoaded || isSplashScreenVisible) {
+    return <LocalSplashScreen />;
   }
 
   return (
