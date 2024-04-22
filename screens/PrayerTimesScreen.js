@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
@@ -16,6 +16,8 @@ const weekPrayers = [
   { time: 'ISHA', days: [true, true, true, true, true, true, true] },
 ]
 
+const prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
 export default function PrayerTimesScreen() {
   const [city, setCity] = useState('');
   const [prayerTimes, setPrayerTimes] = useState(null);
@@ -25,6 +27,8 @@ export default function PrayerTimesScreen() {
   const [hijriDate, setHijriDate] = useState('');
   const [selectedDay, setSelectedDay] = useState(0);
   const countdownRef = useRef(null);
+  const [checkedPrayers, setCheckedPrayers] = useState({});
+  const [checkButtonWidth, setCheckButtonWidth] = useState(0);
 
   const getNextPrayer = () => {
     const now = new Date();
@@ -86,13 +90,31 @@ export default function PrayerTimesScreen() {
     return countdownRef.current;
   }
 
-  const changeDay = (direction) => {
+  const changeDay = async (direction) => {
     const month = new Date().getMonth();
     const day = new Date().getDate();
     if (day + selectedDay + direction < 1 || day + selectedDay + direction > new Date(new Date().getFullYear(), month + 1, 0).getDate()) {
       return;
     }
-    setSelectedDay(selectedDay + direction);
+
+    const newSelectedDay = selectedDay + direction;
+    setSelectedDay(newSelectedDay);
+
+    const newCheckedPrayers = await loadCheckedStateForDay(newSelectedDay);
+    setCheckedPrayers(newCheckedPrayers);
+  }
+
+  const loadCheckedStateForDay = async (dayOffset) => {
+    const date = new Date();
+    date.setDate(date.getDate() + dayOffset);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    const storedData = await AsyncStorage.getItem('prayed');
+    const checkedData = storedData ? JSON.parse(storedData) : {};
+
+    return checkedData[year]?.[month]?.[day] || [0, 0, 0, 0, 0];
   }
 
   const linearGradientProps = () => {
@@ -132,6 +154,56 @@ export default function PrayerTimesScreen() {
         style = { alignSelf: 'center' };
         return { source: moonIcon, style: style };
     }
+  };
+
+  const CheckButton = ({ isChecked, onPress }) => (
+    <TouchableOpacity 
+      onLayout={(event) => {
+        const {width} = event.nativeEvent.layout;
+        setCheckButtonWidth(width);
+      }}
+      onPress={onPress} 
+      style={[styles.checkButton, isChecked ? styles.checked : {}]}>
+      <AntDesign name="check" size={24} color="black" />
+    </TouchableOpacity>
+  );
+
+  const getTodaysDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const day = now.getDate();
+    return { year, month, day };
+  };
+
+  const getPrayedData = async () => {
+    const prayedJSON = await AsyncStorage.getItem('prayed');
+    return prayedJSON != null ? JSON.parse(prayedJSON) : {};
+  }
+
+  const updatedPrayedData = async (newPrayedData) => {
+    const prayedJSON = JSON.stringify(newPrayedData);
+    await AsyncStorage.setItem('prayed', prayedJSON);
+    console.log(newPrayedData);
+  };
+
+  const toggleCheck = async (prayer) => {
+    const index = findPrayerIndex(prayer);
+    const today = getTodaysDate();
+    let newCheckedPrayers = { ...checkedPrayers };
+
+    newCheckedPrayers[today.year] = newCheckedPrayers[today.year] || {};
+    newCheckedPrayers[today.year][today.month] = newCheckedPrayers[today.year][today.month] || {};
+    newCheckedPrayers[today.year][today.month][today.day] = newCheckedPrayers[today.year][today.month][today.day] || [0, 0, 0, 0, 0];
+
+    newCheckedPrayers[today.year][today.month][today.day][index] = newCheckedPrayers[today.year][today.month][today.day][index] ? 0 : 1;
+    console.log(newCheckedPrayers[today.year][today.month][today.day]);
+    setCheckedPrayers(newCheckedPrayers);
+    await updatedPrayedData(newCheckedPrayers);
+  };
+
+  const findPrayerIndex = (prayer) => {
+    return prayerNames.findIndex(name => name === prayer);
   };
 
   useEffect(() => {
@@ -232,12 +304,22 @@ export default function PrayerTimesScreen() {
         </View>
 
         <View style={styles.prayerContainer}>
-          {prayerTimes && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, time]) => (
-            <View key={prayer} style={styles.prayerRow}>
-              <Text style={styles.prayer}>{prayer}</Text>
-              <Text style={styles.time}>{time}</Text>
-            </View>
-          ))}
+          {prayerTimes && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, times]) => {
+            const today = getTodaysDate();
+            const index = findPrayerIndex(prayer);
+            const isChecked = checkedPrayers[today.year]?.[today.month]?.[today.day]?.[index] || 0;
+            return (
+              <View key={prayer} style={styles.prayerRow}>
+                <Text style={styles.prayer}>{prayer}</Text>
+                <View style={styles.timeAndCheckContainer}>
+                  <Text style={[styles.time, prayer === 'Sunrise' && { marginRight: checkButtonWidth + 10}]}>
+                    {prayerTimes[prayer]}
+                  </Text>
+                  {prayer != 'Sunrise' ? <CheckButton isChecked={isChecked} onPress={() => toggleCheck(prayer)} /> : null}
+                </View>
+              </View>
+            );
+          })}
         </View>
         
         <View style={styles.bottomRow}>
@@ -288,6 +370,7 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 20,
     color: 'white',
+    marginRight: 10,
   },
   bottomRow:{
     flexDirection: 'row',
@@ -321,5 +404,22 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: 'contain',
     bottom: 0,
-  }
+  },
+  checkButton: {
+    width: 24,
+    height: 24,
+    borderWidth: 1,
+    borderColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  checked: {
+    backgroundColor: 'white',
+  },
+  timeAndCheckContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
 });

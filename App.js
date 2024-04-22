@@ -68,6 +68,22 @@ export default function App() {
       }
     };
 
+    const checkPrayed = async () => {
+      let prayed = await AsyncStorage.getItem('prayed');
+      if (prayed){
+        return;
+      }
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const day = now.getDate();
+      prayed[year] = {};
+      prayed[year][month] = {};
+      prayed[year][month][day] = [0, 0, 0, 0, 0];
+
+      await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
+    };
+
     const checkAladhan = async () => {
       if (await AsyncStorage.getItem('Aladhan')) {
         return;
@@ -89,6 +105,7 @@ export default function App() {
     };
 
     checkStorage();
+    checkPrayed();
     checkAladhan();
   }, []);
 
