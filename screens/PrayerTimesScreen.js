@@ -7,7 +7,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 const weekPrayers = [
   { time: 'FAJR', days: [false, true, false, true, false, true, false] },
@@ -158,7 +157,13 @@ export default function PrayerTimesScreen() {
     };
   };
 
+  const isValidToggle = (index) => {
+  };
+
   const updateCheckedPrayer = async (index) => {
+    if (!isValidToggle(index)) {
+      return;
+    };
     let updatedPrayer = checkedPrayer;
     updatedPrayer[dayOfYear][index] = !updatedPrayer[dayOfYear][index];
     console.log(updatedPrayer[dayOfYear]);

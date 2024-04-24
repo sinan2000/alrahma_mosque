@@ -21,6 +21,7 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Splash Screen
     SplashScreen.preventAutoHideAsync();
 
     setTimeout(() => {
@@ -31,6 +32,7 @@ export default function App() {
 
   useEffect(() => {
     const getLocation = async () => {
+      // Get current location of user
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         return null;
@@ -40,6 +42,7 @@ export default function App() {
     };
 
     const setCityAndCountry = async (location) => {
+      // Get city and country from location
       const { latitude, longitude } = location.coords;
       const reverseGeocode = await Location.reverseGeocodeAsync({ 
         latitude: latitude, 
@@ -54,6 +57,7 @@ export default function App() {
     };
 
     const checkStorage = async () => {
+      // Check if city and country are stored
       const storedCity = await AsyncStorage.getItem('city');
       const storedCountry = await AsyncStorage.getItem('country');
       if (storedCity && storedCountry) {
@@ -68,23 +72,8 @@ export default function App() {
       }
     };
 
-    const checkPrayed = async () => {
-      let prayed = await AsyncStorage.getItem('prayed');
-      if (prayed){
-        return;
-      }
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      const day = now.getDate();
-      prayed[year] = {};
-      prayed[year][month] = {};
-      prayed[year][month][day] = [0, 0, 0, 0, 0];
-
-      await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
-    };
-
     const checkAladhan = async () => {
+      // Check if prayer times data is stored
       if (await AsyncStorage.getItem('Aladhan')) {
         return;
       }
@@ -99,8 +88,27 @@ export default function App() {
       }
       const data = await response.json();
       if (data) {
-        const day = date.getDate() - 1;
         await AsyncStorage.setItem('Aladhan', JSON.stringify(data.data));
+      }
+    };
+
+    const generatePrayed = (year) => {
+      // Calculates number of days in a given year
+      const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+      const days = isLeapYear ? 366 : 365;
+      const array = new Array(days).fill().map(() => [0, 0, 0, 0, 0]);
+      return array;
+    };
+
+    const checkPrayed = async () => {
+      // Check if prayed data is stored
+      let prayed = await AsyncStorage.getItem('prayed');
+      prayed = prayed ? JSON.parse(prayed) : {};
+      const now = new Date();
+      const year = now.getFullYear();
+      if (!prayed[year]){
+        prayed[year] = generatePrayed(year);
+        await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
       }
     };
 
