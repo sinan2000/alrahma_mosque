@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 const weekPrayers = [
   { time: 'FAJR', days: [false, true, false, true, false, true, false] },
@@ -16,7 +17,7 @@ const weekPrayers = [
   { time: 'ISHA', days: [true, true, true, true, true, true, true] },
 ]
 
-const prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 export default function PrayerTimesScreen() {
   const [city, setCity] = useState('');
@@ -26,11 +27,14 @@ export default function PrayerTimesScreen() {
   const [gregorianDate, setGregorianDate] = useState('');
   const [hijriDate, setHijriDate] = useState('');
   const [selectedDay, setSelectedDay] = useState(0);
-  const countdownRef = useRef(null);
-  const [checkedPrayers, setCheckedPrayers] = useState({});
   const [checkButtonWidth, setCheckButtonWidth] = useState(0);
+  const [checkedPrayer, setCheckedPrayer] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [dayOfYear, setDayOfYear] = useState(0);
+  const countdownRef = useRef(null);
 
   const getNextPrayer = () => {
+    // Gets the next prayer from the current time
     const now = new Date();
     const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
@@ -52,6 +56,7 @@ export default function PrayerTimesScreen() {
   }
 
   const getNextImsakTime = async () => {
+    // Gets number of seconds until next imsak time
     const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
     const date = new Date();
     const day = date.getDate();
@@ -68,6 +73,7 @@ export default function PrayerTimesScreen() {
   };
 
   const startCountdown = (timeToNextPrayer) => {
+    // Sets countdown to next prayer
     clearInterval(countdownRef.current);
 
     countdownRef.current = setInterval(() => {
@@ -90,34 +96,19 @@ export default function PrayerTimesScreen() {
     return countdownRef.current;
   }
 
-  const changeDay = async (direction) => {
+  const changeDay = (direction) => {
+    // Changes the selected day
     const month = new Date().getMonth();
     const day = new Date().getDate();
     if (day + selectedDay + direction < 1 || day + selectedDay + direction > new Date(new Date().getFullYear(), month + 1, 0).getDate()) {
       return;
     }
-
-    const newSelectedDay = selectedDay + direction;
-    setSelectedDay(newSelectedDay);
-
-    const newCheckedPrayers = await loadCheckedStateForDay(newSelectedDay);
-    setCheckedPrayers(newCheckedPrayers);
-  }
-
-  const loadCheckedStateForDay = async (dayOffset) => {
-    const date = new Date();
-    date.setDate(date.getDate() + dayOffset);
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
-
-    const storedData = await AsyncStorage.getItem('prayed');
-    const checkedData = storedData ? JSON.parse(storedData) : {};
-
-    return checkedData[year]?.[month]?.[day] || [0, 0, 0, 0, 0];
+    setDayOfYear(dayOfYear + direction);
+    setSelectedDay(selectedDay + direction);
   }
 
   const linearGradientProps = () => {
+    // Background color based on current prayer
     let colors;
     if (nextPrayer === 'Sunrise') {
         colors = ['#c08423', '#aa7f81']
@@ -138,7 +129,7 @@ export default function PrayerTimesScreen() {
   };
 
   const getStelarPosition = () => {
-    // TODO: Fix height positioning???
+    // Styling for stelar object based on current prayer
     let style;
     switch (nextPrayer) {
       case 'Dhuhr':
@@ -156,6 +147,28 @@ export default function PrayerTimesScreen() {
     }
   };
 
+  const getCheckedPrayer = async () => {
+    // Sets the checked prayer object
+    const object = await AsyncStorage.getItem('prayed');
+    const year = new Date().getFullYear();
+    const data = object ? JSON.parse(object) : {};
+    if (data && data[year]) {
+      setCheckedPrayer(data[year]);
+      setLoading(false);
+    };
+  };
+
+  const updateCheckedPrayer = async (index) => {
+    let updatedPrayer = checkedPrayer;
+    updatedPrayer[dayOfYear][index] = !updatedPrayer[dayOfYear][index];
+    console.log(updatedPrayer[dayOfYear]);
+    setCheckedPrayer({...updatedPrayer});
+
+    let object = {};
+    object[new Date().getFullYear()] = updatedPrayer;
+    await AsyncStorage.setItem('prayed', JSON.stringify(object));
+  };
+
   const CheckButton = ({ isChecked, onPress }) => (
     <TouchableOpacity 
       onLayout={(event) => {
@@ -168,48 +181,21 @@ export default function PrayerTimesScreen() {
     </TouchableOpacity>
   );
 
-  const getTodaysDate = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const day = now.getDate();
-    return { year, month, day };
-  };
-
-  const getPrayedData = async () => {
-    const prayedJSON = await AsyncStorage.getItem('prayed');
-    return prayedJSON != null ? JSON.parse(prayedJSON) : {};
-  }
-
-  const updatedPrayedData = async (newPrayedData) => {
-    const prayedJSON = JSON.stringify(newPrayedData);
-    await AsyncStorage.setItem('prayed', prayedJSON);
-    console.log(newPrayedData);
-  };
-
-  const toggleCheck = async (prayer) => {
-    const index = findPrayerIndex(prayer);
-    const today = getTodaysDate();
-    let newCheckedPrayers = { ...checkedPrayers };
-
-    newCheckedPrayers[today.year] = newCheckedPrayers[today.year] || {};
-    newCheckedPrayers[today.year][today.month] = newCheckedPrayers[today.year][today.month] || {};
-    newCheckedPrayers[today.year][today.month][today.day] = newCheckedPrayers[today.year][today.month][today.day] || [0, 0, 0, 0, 0];
-
-    newCheckedPrayers[today.year][today.month][today.day][index] = newCheckedPrayers[today.year][today.month][today.day][index] ? 0 : 1;
-    console.log(newCheckedPrayers[today.year][today.month][today.day]);
-    setCheckedPrayers(newCheckedPrayers);
-    await updatedPrayedData(newCheckedPrayers);
-  };
-
-  const findPrayerIndex = (prayer) => {
-    return prayerNames.findIndex(name => name === prayer);
-  };
-
   useEffect(() => {
+    const setDay = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const start = new Date(year, 0, 1);
+      const diff = now - start;
+      const oneDay = 1000 * 60 * 60 * 24;
+      const day = Math.floor(diff / oneDay);
+      setDayOfYear(day);
+    }
     const fetchInfo = async () => {
       const city = await AsyncStorage.getItem('city');
       setCity(city);
+      setDay();
+      await getCheckedPrayer();
     };
 
     fetchInfo();
@@ -304,20 +290,17 @@ export default function PrayerTimesScreen() {
         </View>
 
         <View style={styles.prayerContainer}>
-          {prayerTimes && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, times]) => {
-            const today = getTodaysDate();
-            const index = findPrayerIndex(prayer);
-            const isChecked = checkedPrayers[today.year]?.[today.month]?.[today.day]?.[index] || 0;
+          {prayerTimes && !loading && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, time]) => {
+            const index = prayers.indexOf(prayer);
+            const isChecked = index != undefined ? checkedPrayer[dayOfYear][index] : null;
             return (
-              <View key={prayer} style={styles.prayerRow}>
-                <Text style={styles.prayer}>{prayer}</Text>
-                <View style={styles.timeAndCheckContainer}>
-                  <Text style={[styles.time, prayer === 'Sunrise' && { marginRight: checkButtonWidth + 10}]}>
-                    {prayerTimes[prayer]}
-                  </Text>
-                  {prayer != 'Sunrise' ? <CheckButton isChecked={isChecked} onPress={() => toggleCheck(prayer)} /> : null}
-                </View>
+            <View key={prayer} style={styles.prayerRow}>
+              <Text style={styles.prayer}>{prayer}</Text>
+              <View style={styles.timeAndCheckContainer}>
+                <Text style={[styles.time, prayer === 'Sunrise' && {marginRight: checkButtonWidth + 10}]}>{time}</Text>
+                {prayer != 'Sunrise' ? <CheckButton isChecked={isChecked} onPress={() => updateCheckedPrayer(index)} /> : null}
               </View>
+            </View>
             );
           })}
         </View>
