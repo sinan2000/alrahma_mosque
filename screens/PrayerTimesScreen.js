@@ -16,6 +16,7 @@ const weekPrayers = [
   { time: 'ISHA', days: [true, true, true, true, true, true, true] },
 ]
 
+const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
 const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 export default function PrayerTimesScreen() {
@@ -30,6 +31,7 @@ export default function PrayerTimesScreen() {
   const [checkedPrayer, setCheckedPrayer] = useState({});
   const [loading, setLoading] = useState(true);
   const [dayOfYear, setDayOfYear] = useState(0);
+  const [todayDayOfYear, setTodayDayOfYear] = useState(0);
   const countdownRef = useRef(null);
 
   const getNextPrayer = () => {
@@ -166,7 +168,6 @@ export default function PrayerTimesScreen() {
     };
     let updatedPrayer = checkedPrayer;
     updatedPrayer[dayOfYear][index] = !updatedPrayer[dayOfYear][index];
-    console.log(updatedPrayer[dayOfYear]);
     setCheckedPrayer({...updatedPrayer});
 
     let object = {};
@@ -182,9 +183,26 @@ export default function PrayerTimesScreen() {
       }}
       onPress={onPress} 
       style={[styles.checkButton, isChecked ? styles.checked : {}]}>
-      <AntDesign name="check" size={24} color="black" />
+      <AntDesign name="check" size={17} color="black" />
     </TouchableOpacity>
   );
+
+  const gridData = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const daysFromMonday = (dayOfWeek + 6) % 7;
+    const monday = todayDayOfYear - daysFromMonday;
+    const sunday = monday + 6;
+    const data = [];
+    for (let i = 0; i < 5; i++) {
+      const prayers = [];
+      for (let j = 0; j < 7; j++) {
+        prayers.push(checkedPrayer[monday + j][i]);
+      }
+      data.push({ time: gridNames[i], days: prayers });
+    }
+    return data;
+  }
 
   useEffect(() => {
     const setDay = () => {
@@ -195,6 +213,7 @@ export default function PrayerTimesScreen() {
       const oneDay = 1000 * 60 * 60 * 24;
       const day = Math.floor(diff / oneDay);
       setDayOfYear(day);
+      setTodayDayOfYear(day);
     }
     const fetchInfo = async () => {
       const city = await AsyncStorage.getItem('city');
@@ -279,7 +298,7 @@ export default function PrayerTimesScreen() {
           <TouchableOpacity
             onPress={() => changeDay(-1)}
           >
-            <FontAwesome name="angle-left" size={35} color="white" />
+            <FontAwesome name="angle-left" size={45} color="white" />
           </TouchableOpacity>
 
           <View>
@@ -290,7 +309,7 @@ export default function PrayerTimesScreen() {
           <TouchableOpacity
             onPress={() => changeDay(1)}
           >
-            <FontAwesome name="angle-right" size={35} color="white" />
+            <FontAwesome name="angle-right" size={45} color="white" />
           </TouchableOpacity>
         </View>
 
@@ -298,11 +317,12 @@ export default function PrayerTimesScreen() {
           {prayerTimes && !loading && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, time]) => {
             const index = prayers.indexOf(prayer);
             const isChecked = index != undefined ? checkedPrayer[dayOfYear][index] : null;
+            const isNextPrayer = prayer === nextPrayer;
             return (
-            <View key={prayer} style={styles.prayerRow}>
+            <View key={prayer} style={[styles.prayerRow, isNextPrayer ? styles.nextPrayerFocus : {}]}>
               <Text style={styles.prayer}>{prayer}</Text>
               <View style={styles.timeAndCheckContainer}>
-                <Text style={[styles.time, prayer === 'Sunrise' && {marginRight: checkButtonWidth + 10}]}>{time}</Text>
+                <Text style={[styles.time, prayer === 'Sunrise' && {marginRight: checkButtonWidth}]}>{time}</Text>
                 {prayer != 'Sunrise' ? <CheckButton isChecked={isChecked} onPress={() => updateCheckedPrayer(index)} /> : null}
               </View>
             </View>
@@ -314,7 +334,7 @@ export default function PrayerTimesScreen() {
           <Text style={styles.nextPrayer}>Next prayer in {timeToNextPrayer}</Text>
         </View>
 
-        <PrayerGrid prayerTimes={weekPrayers} />
+        {!loading && <PrayerGrid prayerTimes={gridData()} />}
       </View>
     </LinearGradient>
   );
@@ -335,7 +355,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 20,
   },
   date: {
@@ -349,7 +369,9 @@ const styles = StyleSheet.create({
   prayerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 12,
+    backgroundColor: 'transparent',
   },
   prayer: {
     fontSize: 20,
@@ -358,7 +380,7 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 20,
     color: 'white',
-    marginRight: 10,
+    paddingRight: 10,
   },
   bottomRow:{
     flexDirection: 'row',
@@ -410,4 +432,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
+  nextPrayerFocus: {
+    backgroundColor: '#0e9d87',
+  }
 });
