@@ -16,8 +16,7 @@ function getKeyForNextImsak() {
     return `${year}_${month.toString().padStart(2, '0')}`;
 }
   
-function getKeysToFetch() {
-    const today = new Date();
+function getKeysToFetch(today) {
     const keys = [getKeyForMonth(today)];
   
     if (today.getDate() < 10) {

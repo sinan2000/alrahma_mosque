@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
-import { getKeyForMonth, getKeyForNextImsak } from '../utils';
+import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch } from '../utils';
 
 const weekPrayers = [
   { time: 'FAJR', days: [false, true, false, true, false, true, false] },
@@ -27,7 +27,7 @@ export default function PrayerTimesScreen() {
   const [timeToNextPrayer, setTimeToNextPrayer] = useState('');
   const [gregorianDate, setGregorianDate] = useState('');
   const [hijriDate, setHijriDate] = useState('');
-  const [selectedDay, setSelectedDay] = useState(0);
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [checkButtonWidth, setCheckButtonWidth] = useState(0);
   const [checkedPrayer, setCheckedPrayer] = useState({});
   const [loading, setLoading] = useState(true);
@@ -99,16 +99,32 @@ export default function PrayerTimesScreen() {
     return countdownRef.current;
   }
 
+  const checkTimesForNewDate = async (date) => {
+    // Checks if the prayer times for the new date are available
+    const aladhan = JSON.parse(await AsyncStorage.getItem('Aladhan')) || {};
+    const keysToFetch = getKeysToFetch(date);
+    let update = false;
+    for (const key of keysToFetch) {
+      if (!aladhan[key]) {
+        await fetchAndStorePrayerTimes(key, aladhan);
+        update = true;
+      }
+    }
+    if(update) {
+      await AsyncStorage.setItem('Aladhan', JSON.stringify(aladhan));
+    }
+  };
+
   const changeDay = (direction) => {
     // Changes the selected day
-    const month = new Date().getMonth();
-    const day = new Date().getDate();
-    if (day + selectedDay + direction < 1 || day + selectedDay + direction > new Date(new Date().getFullYear(), month + 1, 0).getDate()) {
-      return;
-    }
-    setDayOfYear(dayOfYear + direction);
-    setSelectedDay(selectedDay + direction);
-  }
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + direction);
+    checkTimesForNewDate(newDate);
+    setCurrentDate(newDate);
+
+    const newDayOfYear = Math.ceil((newDate - new Date(newDate.getFullYear(), 0, 1)) / 86400000);	
+    setDayOfYear(newDayOfYear);
+  };
 
   const linearGradientProps = () => {
     // Background color based on current prayer
@@ -236,10 +252,9 @@ export default function PrayerTimesScreen() {
   useEffect(() => {
     const fetchInfo = async () => {
       const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
-      const date = new Date();
-      const key = getKeyForMonth(date);
-      const day = date.getDate() - 1 + selectedDay;
-
+      const key = getKeyForMonth(currentDate);
+      const day = currentDate.getDate() - 1;
+      
       setPrayerTimes({
         "Imsak": data[key][day].timings.Imsak.split(' ')[0],
         "Sunrise": data[key][day].timings.Sunrise.split(' ')[0],
@@ -252,34 +267,27 @@ export default function PrayerTimesScreen() {
       const hijriInfo = data[key][day].date.hijri;
       setHijriDate(`${hijriInfo.day} ${hijriInfo.month.en} ${hijriInfo.year} ${hijriInfo.designation.abbreviated}`);
 
-      let prefix;
-      switch (selectedDay) {
-        case 0:
-          prefix = 'Today, ';
-          break;
-        case 1:
-          prefix = 'Tomorrow, ';
-          break;
-        case -1:
-          prefix = 'Yesterday, ';
-          break;
-        default:
-          prefix = '';
+      const formatDate = (date) => {
+        const options = { month: 'long', day: 'numeric'};
+        return date.toLocaleDateString(undefined, options);
       }
-      setGregorianDate(`${prefix}${day + 1} ${date.toLocaleString('default', { month: 'long' })}`)
+      
+      setGregorianDate(formatDate(currentDate));
     };
 
     fetchInfo();
-  }, [selectedDay]);
+  }, [currentDate]);
 
   useEffect(() => {
-    if (selectedDay !== 0)
+    const today = new Date();
+    const isToday = currentDate.getDate() === today.getDate() && 
+                    currentDate.getMonth() === today.getMonth() &&
+                    currentDate.getFullYear() === today.getFullYear();
+    if (!isToday || !prayerTimes)
     {
       return;
     }
-    if(prayerTimes) {
-      getNextPrayer();
-    }
+    getNextPrayer();
   }, [prayerTimes]);
 
   const celestialBody = getStelarPosition();

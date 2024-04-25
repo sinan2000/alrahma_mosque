@@ -77,7 +77,8 @@ export default function App() {
       // Prayer times for previous, current and next month
       const storedData = await AsyncStorage.getItem('Aladhan') || '{}';
       const aladhan = JSON.parse(storedData);
-      const keysToFetch = getKeysToFetch();
+      const today = new Date();
+      const keysToFetch = getKeysToFetch(today);
       let update = false;
       for (const key of keysToFetch) {
         if (!aladhan[key]) {
