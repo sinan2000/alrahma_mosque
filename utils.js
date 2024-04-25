@@ -74,6 +74,17 @@ const generatePrayed = (year) => {
     const days = isLeapYear ? 366 : 365;
     const array = new Array(days).fill().map(() => [0, 0, 0, 0, 0]);
     return array;
-  };
+};
+
+function isOffsetDate(date, offset) {
+    const today = new Date();
+    const targetDate = new Date();
+    targetDate.setDate(today.getDate() + offset);
+
+    const compare0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const compare1 = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+
+    return compare0.getTime() === compare1.getTime();
+}
   
-export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed};
+export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed, isOffsetDate};

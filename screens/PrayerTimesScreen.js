@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
-import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed } from '../utils';
+import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed, isOffsetDate } from '../utils';
 
 const weekPrayers = [
   { time: 'FAJR', days: [false, true, false, true, false, true, false] },
@@ -301,10 +301,8 @@ export default function PrayerTimesScreen() {
   }, [currentDate]);
 
   useEffect(() => {
-    const today = new Date();
-    const isToday = currentDate.getDate() === today.getDate() && 
-                    currentDate.getMonth() === today.getMonth() &&
-                    currentDate.getFullYear() === today.getFullYear();
+    const isToday = isOffsetDate(currentDate, 0);
+
     if (!isToday || !prayerTimes)
     {
       return;
@@ -350,7 +348,7 @@ export default function PrayerTimesScreen() {
           {prayerTimes && !loading && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, time]) => {
             const index = prayers.indexOf(prayer);
             const isChecked = index != undefined ? checkedPrayer[dayOfYear][index] : null;
-            const isNextPrayer = prayer === nextPrayer;
+            const isNextPrayer = prayer === nextPrayer && (nextPrayer === 'Imsak' ? isOffsetDate(currentDate, 1) : isOffsetDate(currentDate, 0));
             return (
             <View key={prayer} style={[styles.prayerRow, isNextPrayer ? styles.nextPrayerFocus : {}]}>
               <Text style={styles.prayer}>{prayer}</Text>
