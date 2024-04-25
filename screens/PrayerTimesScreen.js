@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
-import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch } from '../utils';
+import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed } from '../utils';
 
 const weekPrayers = [
   { time: 'FAJR', days: [false, true, false, true, false, true, false] },
@@ -115,11 +115,33 @@ export default function PrayerTimesScreen() {
     }
   };
 
+  const checkPrayedForNewDate = async (date) => {
+      // Check if prayed data is stored
+      let prayed = await AsyncStorage.getItem('prayed');
+      prayed = prayed ? JSON.parse(prayed) : {};
+      const now = new Date();
+      const years = getKeysToPrayed(now);
+
+      let update = false;
+
+      years.forEach((year) => {
+        if (!prayed[year]) {
+          prayed[year] = generatePrayed(year);
+          update = true;
+        }
+      })
+      
+      if(update){
+        await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
+      }
+  };
+
   const changeDay = (direction) => {
     // Changes the selected day
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + direction);
     checkTimesForNewDate(newDate);
+    checkPrayedForNewDate(newDate);
     setCurrentDate(newDate);
 
     const newDayOfYear = Math.ceil((newDate - new Date(newDate.getFullYear(), 0, 1)) / 86400000);	
@@ -254,7 +276,7 @@ export default function PrayerTimesScreen() {
       const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
       const key = getKeyForMonth(currentDate);
       const day = currentDate.getDate() - 1;
-      
+
       setPrayerTimes({
         "Imsak": data[key][day].timings.Imsak.split(' ')[0],
         "Sunrise": data[key][day].timings.Sunrise.split(' ')[0],
@@ -351,13 +373,16 @@ export default function PrayerTimesScreen() {
   );
 }
 
+const window = Dimensions.get('window');
+const height_scale = window.height / 100;
+const width_scale = window.width / 100;
 const styles = StyleSheet.create({
   linearGradient: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingHorizontal: width_scale * 4.5,
+    paddingTop: height_scale * 2,
+    paddingBottom: height_scale,
   },
   container: {
     flex: 1,
@@ -366,13 +391,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
-    marginBottom: 20,
+    marginTop: height_scale,
+    marginBottom: height_scale * 2,
   },
   date: {
     color: 'white',
     textAlign: 'center',
-    fontSize: 16
+    fontSize: width_scale * 3.75,
   },
   prayerContainer: {
     flex: 1,
@@ -381,19 +406,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    marginHorizontal: -20,
+    paddingVertical: height_scale * 1.25,
+    marginHorizontal: -width_scale * 4.5,
     backgroundColor: 'transparent',
   },
   prayer: {
-    fontSize: 20,
+    fontSize: width_scale * 4.67,
     color: 'white',
-    marginLeft: 20,
+    marginLeft: width_scale * 4.5,
   },
   time: {
-    fontSize: 20,
+    fontSize: width_scale * 4.67,
     color: 'white',
-    paddingRight: 10,
+    paddingRight: width_scale * 2.25,
   },
   bottomRow:{
     flexDirection: 'row',
@@ -407,30 +432,30 @@ const styles = StyleSheet.create({
   },
   location: {
     color: 'white',
-    fontSize: 16,
+    fontSize: width_scale * 3.75,
   },
   separator: {
     color: 'white',
-    fontSize: 16,
+    fontSize: width_scale * 3.75,
   },
   nextPrayer: {
-    fontSize: 16,
+    fontSize: width_scale * 3.75,
     color: 'white',
   },
   celestialContainer: {
-    height: 200,
+    height: height_scale * 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   stelar: {
-    width: 100,
-    height: 100,
+    width: width_scale * 23,
+    height: height_scale * 10,
     resizeMode: 'contain',
     bottom: 0,
   },
   checkButton: {
-    width: 24,
-    height: 24,
+    width: height_scale * 2.6,
+    height: height_scale * 2.6,
     borderWidth: 1,
     borderColor: 'black',
     justifyContent: 'center',
@@ -444,7 +469,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginRight: 20,
+    marginRight: width_scale * 4.5,
   },
   nextPrayerFocus: {
     backgroundColor: '#0e9d87',

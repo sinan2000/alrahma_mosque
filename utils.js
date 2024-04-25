@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function getKeyForMonth(date) {
     const year = date.getFullYear();
-    const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+    const month = date.getMonth() + 1;
     return `${year}_${month.toString().padStart(2, '0')}`;
 }
 
@@ -50,5 +50,30 @@ async function fetchAndStorePrayerTimes(monthKey, aladhan) {
     const prayerTimes = await fetchPrayerTimesFromAPI(monthKey);
     aladhan[monthKey] = prayerTimes;
 }  
+
+const getKeysToPrayed = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const keys = [year];
+
+    if (month === 0 && day <= 20) {
+        keys.unshift(year - 1);
+    }
+
+    if (month === 11 && day >= 11) {
+        keys.push(year + 1);
+    }
+
+    return keys;
+};
+
+const generatePrayed = (year) => {
+    // Calculates number of days in a given year
+    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    const days = isLeapYear ? 366 : 365;
+    const array = new Array(days).fill().map(() => [0, 0, 0, 0, 0]);
+    return array;
+  };
   
-export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes};
+export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed};

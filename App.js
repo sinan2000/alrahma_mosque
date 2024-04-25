@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
 import LocalSplashScreen from './screens/SplashScreen';
 import PrayerTimesScreen from './screens/PrayerTimesScreen';
-import { getKeysToFetch, fetchAndStorePrayerTimes } from './utils';
+import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
 
 const Tab = createBottomTabNavigator();
 
@@ -92,22 +92,23 @@ export default function App() {
       }
     };
 
-    const generatePrayed = (year) => {
-      // Calculates number of days in a given year
-      const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-      const days = isLeapYear ? 366 : 365;
-      const array = new Array(days).fill().map(() => [0, 0, 0, 0, 0]);
-      return array;
-    };
-
     const checkPrayed = async () => {
       // Check if prayed data is stored
       let prayed = await AsyncStorage.getItem('prayed');
       prayed = prayed ? JSON.parse(prayed) : {};
       const now = new Date();
-      const year = now.getFullYear();
-      if (!prayed[year]){
-        prayed[year] = generatePrayed(year);
+      const years = getKeysToPrayed(now);
+
+      let update = false;
+
+      years.forEach((year) => {
+        if (!prayed[year]) {
+          prayed[year] = generatePrayed(year);
+          update = true;
+        }
+      })
+      
+      if(update){
         await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
       }
     };
