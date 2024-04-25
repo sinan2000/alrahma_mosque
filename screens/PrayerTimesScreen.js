@@ -23,7 +23,6 @@ export default function PrayerTimesScreen() {
   const [checkButtonWidth, setCheckButtonWidth] = useState(0);
   const [checkedPrayer, setCheckedPrayer] = useState({});
   const [loading, setLoading] = useState(true);
-  const [dayOfYear, setDayOfYear] = useState(0);
   const countdownRef = useRef(null);
 
   const getNextPrayer = () => {
@@ -184,10 +183,20 @@ export default function PrayerTimesScreen() {
   };
 
   const isValidToggle = (index) => {
+    const today = new Date();
+    const isFutureDate = currentDate > today;
+    if (isFutureDate) {
+      return false;
+    }
+    if (currentDate.toDateString() === today.toDateString()) {
+      const current_index = prayers.indexOf(nextPrayer) - 1;
+      return index <= current_index;
+    }
+    return true;
   };
 
   const updateCheckedPrayer = async (index) => {
-    if (isValidToggle(index)) {
+    if (!isValidToggle(index)) {
       return;
     };
     const year = currentDate.getFullYear();
