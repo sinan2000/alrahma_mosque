@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
+import { getKeyForMonth, getKeyForNextImsak } from '../utils';
 
 const weekPrayers = [
   { time: 'FAJR', days: [false, true, false, true, false, true, false] },
@@ -51,8 +52,9 @@ export default function PrayerTimesScreen() {
       startCountdown(next[1] - currentSeconds);
     } else {
       setNextPrayer('Imsak');
-      nextImsak = getNextImsakTime();
-      startCountdown(nextImsak + 24 * 3600 - currentSeconds);
+      getNextImsakTime().then(nextImsak => {
+        startCountdown(nextImsak + 24 * 3600 - currentSeconds);
+      });
     }
   }
 
@@ -65,11 +67,11 @@ export default function PrayerTimesScreen() {
     if (length(data) < day) {
       return;
     }
-    const imsakTime = data[day].timings.Imsak.split(' ')[0];
+    const key = getKeyForNextImsak();
+    const imsakTime = data[key][day].timings.Imsak.split(' ')[0];
 
     const [hours, minutes] = imsakTime.split(':').map(Number);
     const imsakSeconds = hours * 3600 + minutes * 60;
-
     return imsakSeconds;
   };
 
@@ -163,7 +165,7 @@ export default function PrayerTimesScreen() {
   };
 
   const updateCheckedPrayer = async (index) => {
-    if (!isValidToggle(index)) {
+    if (isValidToggle(index)) {
       return;
     };
     let updatedPrayer = checkedPrayer;
@@ -235,18 +237,19 @@ export default function PrayerTimesScreen() {
     const fetchInfo = async () => {
       const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
       const date = new Date();
+      const key = getKeyForMonth(date);
       const day = date.getDate() - 1 + selectedDay;
 
       setPrayerTimes({
-        "Imsak": data[day].timings.Imsak.split(' ')[0],
-        "Sunrise": data[day].timings.Sunrise.split(' ')[0],
-        "Dhuhr": data[day].timings.Dhuhr.split(' ')[0],
-        "Asr": data[day].timings.Asr.split(' ')[0],
-        "Maghrib": data[day].timings.Maghrib.split(' ')[0],
-        "Isha": data[day].timings.Isha.split(' ')[0],
+        "Imsak": data[key][day].timings.Imsak.split(' ')[0],
+        "Sunrise": data[key][day].timings.Sunrise.split(' ')[0],
+        "Dhuhr": data[key][day].timings.Dhuhr.split(' ')[0],
+        "Asr": data[key][day].timings.Asr.split(' ')[0],
+        "Maghrib": data[key][day].timings.Maghrib.split(' ')[0],
+        "Isha": data[key][day].timings.Isha.split(' ')[0],
       });
 
-      const hijriInfo = data[day].date.hijri;
+      const hijriInfo = data[key][day].date.hijri;
       setHijriDate(`${hijriInfo.day} ${hijriInfo.month.en} ${hijriInfo.year} ${hijriInfo.designation.abbreviated}`);
 
       let prefix;
@@ -371,11 +374,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
+    marginHorizontal: -20,
     backgroundColor: 'transparent',
   },
   prayer: {
     fontSize: 20,
     color: 'white',
+    marginLeft: 20,
   },
   time: {
     fontSize: 20,
@@ -431,6 +436,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    marginRight: 20,
   },
   nextPrayerFocus: {
     backgroundColor: '#0e9d87',

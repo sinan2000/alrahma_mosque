@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
 import LocalSplashScreen from './screens/SplashScreen';
 import PrayerTimesScreen from './screens/PrayerTimesScreen';
+import { getKeysToFetch, fetchAndStorePrayerTimes } from './utils';
 
 const Tab = createBottomTabNavigator();
 
@@ -73,22 +74,20 @@ export default function App() {
     };
 
     const checkAladhan = async () => {
-      // Check if prayer times data is stored
-      if (await AsyncStorage.getItem('Aladhan')) {
-        return;
+      // Prayer times for previous, current and next month
+      const storedData = await AsyncStorage.getItem('Aladhan') || '{}';
+      const aladhan = JSON.parse(storedData);
+      const keysToFetch = getKeysToFetch();
+      let update = false;
+      for (const key of keysToFetch) {
+        if (!aladhan[key]) {
+          await fetchAndStorePrayerTimes(key, aladhan);
+          update = true;
+        }
       }
-      const city = await AsyncStorage.getItem('city');
-      const country = await AsyncStorage.getItem('country');
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const response = await fetch(`http://api.aladhan.com/v1/calendarByCity/${year}/${month}?city=${city}&country=${country}&method=2`);
-      while (!response.ok) {
-        response = await fetch(`http://api.aladhan.com/v1/calendarByCity/${year}/${month}?city=${city}&country=${country}&method=2`);
-      }
-      const data = await response.json();
-      if (data) {
-        await AsyncStorage.setItem('Aladhan', JSON.stringify(data.data));
+
+      if(update) {
+        await AsyncStorage.setItem('Aladhan', JSON.stringify(aladhan));
       }
     };
 

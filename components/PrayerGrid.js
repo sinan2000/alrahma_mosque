@@ -68,10 +68,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   dayText: {
-    // Add your day header text styles
+    color: 'grey',
   },
   prayerText: {
-    // Add your prayer name text styles
+    color: 'grey',
   },
   prayerRow: {
     flexDirection: 'row',
