@@ -12,7 +12,7 @@ import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysTo
 const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
 const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
-export default function PrayerTimesScreen() {
+export default function PrayerTimesScreen( { navigation }) {
   const [city, setCity] = useState('');
   const [prayerTimes, setPrayerTimes] = useState(null);
   const [nextPrayer, setNextPrayer] = useState('');
@@ -361,7 +361,11 @@ export default function PrayerTimesScreen() {
           <Text style={styles.nextPrayer}>Next prayer in {timeToNextPrayer}</Text>
         </View>
 
-        {!loading && <PrayerGrid prayerTimes={gridData()} />}
+        {!loading && 
+          <PrayerGrid 
+            prayerTimes={gridData()} 
+            navigation={navigation}
+          />}
       </View>
     </LinearGradient>
   );

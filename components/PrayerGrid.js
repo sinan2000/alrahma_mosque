@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, FlatList } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity } from 'react-native';
 
-const PrayerGrid = ({ prayerTimes }) => {
+const PrayerGrid = ({ prayerTimes, navigation }) => {
   const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   // Render each day of the week header
@@ -31,14 +31,18 @@ const PrayerGrid = ({ prayerTimes }) => {
   );
 
   return (
-    <View style={styles.container}>
-      {renderDayHeader()}
-      <FlatList
-        data={prayerTimes}
-        renderItem={renderPrayerRow}
-        keyExtractor={(item, index) => index.toString()}
-      />
-    </View>
+    <TouchableOpacity
+      onPress={() => navigation.navigate('PrayerTracker')}
+    >
+      <View style={styles.container}>
+        {renderDayHeader()}
+        <FlatList
+          data={prayerTimes}
+          renderItem={renderPrayerRow}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      </View>
+    </TouchableOpacity>
   );
 };
 

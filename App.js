@@ -1,15 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from '@react-navigation/native';
 import { useFonts, OpenSans_400Regular, OpenSans_300Light, OpenSans_500Medium, OpenSans_700Bold } from '@expo-google-fonts/open-sans';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
 import LocalSplashScreen from './screens/SplashScreen';
 import PrayerTimesScreen from './screens/PrayerTimesScreen';
+import PrayerTrackerScreen from './screens/PrayerTrackerScreen';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+function PrayerStackScreen() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="PrayerTimes" 
+        component={PrayerTimesScreen} 
+        options={{ headerShown: true, title: 'Prayer Times'}} 
+      />
+      <Stack.Screen 
+        name="PrayerTracker" 
+        component={PrayerTrackerScreen} 
+        options={{ headerShown: true, title: 'Prayer Tracker' }}
+      />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   const [isSplashScreenVisible, setSplashScreenVisibility] = useState(true);
@@ -133,8 +153,9 @@ export default function App() {
       >
         <Tab.Screen 
           name='Prayer Times' 
-          component={PrayerTimesScreen} 
+          component={PrayerStackScreen} 
           options={{
+            headerShown: false,
             tabBarLabel: 'Prayer Times',
             tabBarActiveTintColor: '#0e9d87',
             tabBarIcon: ({ focused, color, size }) => (
