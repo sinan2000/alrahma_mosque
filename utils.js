@@ -69,7 +69,6 @@ const getKeysToPrayed = (date) => {
 };
 
 const generatePrayed = (year) => {
-    // Calculates number of days in a given year
     const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
     const days = isLeapYear ? 366 : 365;
     const array = new Array(days).fill().map(() => [0, 0, 0, 0, 0]);

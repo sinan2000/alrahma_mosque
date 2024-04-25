@@ -53,10 +53,6 @@ export default function PrayerTimesScreen( { navigation }) {
     const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
     const date = new Date();
     const day = date.getDate();
-    // TODO: Think of last day of month retrieval
-    if (length(data) < day) {
-      return;
-    }
     const key = getKeyForNextImsak();
     const imsakTime = data[key][day].timings.Imsak.split(' ')[0];
 
