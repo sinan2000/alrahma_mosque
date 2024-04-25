@@ -7,15 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
-import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed, isOffsetDate } from '../utils';
-
-const weekPrayers = [
-  { time: 'FAJR', days: [false, true, false, true, false, true, false] },
-  { time: 'DHUHR', days: [true, true, true, true, false, false, true] },
-  { time: 'ASR', days: [true, true, true, true, true, true, true] },
-  { time: 'MAGHRIB', days: [true, true, true, true, true, true, true] },
-  { time: 'ISHA', days: [true, true, true, true, true, true, true] },
-]
+import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed, isOffsetDate, getDayOfYear } from '../utils';
 
 const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
 const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
@@ -32,7 +24,6 @@ export default function PrayerTimesScreen() {
   const [checkedPrayer, setCheckedPrayer] = useState({});
   const [loading, setLoading] = useState(true);
   const [dayOfYear, setDayOfYear] = useState(0);
-  const [todayDayOfYear, setTodayDayOfYear] = useState(0);
   const countdownRef = useRef(null);
 
   const getNextPrayer = () => {
@@ -117,21 +108,18 @@ export default function PrayerTimesScreen() {
 
   const checkPrayedForNewDate = async (date) => {
       // Check if prayed data is stored
-      let prayed = await AsyncStorage.getItem('prayed');
-      prayed = prayed ? JSON.parse(prayed) : {};
-      const now = new Date();
-      const years = getKeysToPrayed(now);
-
+      const years = getKeysToPrayed(currentDate);
       let update = false;
 
       years.forEach((year) => {
-        if (!prayed[year]) {
+        if (!checkedPrayer[year]) {
           prayed[year] = generatePrayed(year);
           update = true;
         }
       })
       
       if(update){
+        setCheckedPrayer({...prayed});
         await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
       }
   };
@@ -143,9 +131,6 @@ export default function PrayerTimesScreen() {
     checkTimesForNewDate(newDate);
     checkPrayedForNewDate(newDate);
     setCurrentDate(newDate);
-
-    const newDayOfYear = Math.ceil((newDate - new Date(newDate.getFullYear(), 0, 1)) / 86400000);	
-    setDayOfYear(newDayOfYear);
   };
 
   const linearGradientProps = () => {
@@ -187,14 +172,13 @@ export default function PrayerTimesScreen() {
         return { source: moonIcon, style: style };
     }
   };
-
+  
   const getCheckedPrayer = async () => {
     // Sets the checked prayer object
     const object = await AsyncStorage.getItem('prayed');
-    const year = new Date().getFullYear();
     const data = object ? JSON.parse(object) : {};
-    if (data && data[year]) {
-      setCheckedPrayer(data[year]);
+    if (data) {
+      setCheckedPrayer(data);
       setLoading(false);
     };
   };
@@ -206,13 +190,13 @@ export default function PrayerTimesScreen() {
     if (isValidToggle(index)) {
       return;
     };
-    let updatedPrayer = checkedPrayer;
-    updatedPrayer[dayOfYear][index] = !updatedPrayer[dayOfYear][index];
-    setCheckedPrayer({...updatedPrayer});
+    const year = currentDate.getFullYear();
+    const dayOfYear = getDayOfYear(currentDate) - 1;
+    let updatedPrayer = { ...checkedPrayer };
+    updatedPrayer[year][dayOfYear][index] = !updatedPrayer[year][dayOfYear][index];
 
-    let object = {};
-    object[new Date().getFullYear()] = updatedPrayer;
-    await AsyncStorage.setItem('prayed', JSON.stringify(object));
+    setCheckedPrayer(updatedPrayer);
+    await AsyncStorage.setItem('prayed', JSON.stringify(updatedPrayer));
   };
 
   const CheckButton = ({ isChecked, onPress }) => (
@@ -228,37 +212,33 @@ export default function PrayerTimesScreen() {
   );
 
   const gridData = () => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const daysFromMonday = (dayOfWeek + 6) % 7;
-    const monday = todayDayOfYear - daysFromMonday;
-    const sunday = monday + 6;
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + (startOfWeek.getDay() === 0 ? -6 : 1));
+
     const data = [];
+
     for (let i = 0; i < 5; i++) {
       const prayers = [];
-      for (let j = 0; j < 7; j++) {
-        prayers.push(checkedPrayer[monday + j][i]);
+
+      for(let j = 0; j < 7; j++) {
+        const dayDate = new Date(startOfWeek);
+        dayDate.setDate(startOfWeek.getDate() + j);
+        const year = dayDate.getFullYear();
+        const dayOfYear = getDayOfYear(dayDate);
+        const dayData = checkedPrayer[year] ? checkedPrayer[year][dayOfYear - 1] : [0, 0, 0, 0, 0];
+        prayers.push(dayData[i]);
       }
+
       data.push({ time: gridNames[i], days: prayers });
     }
+
     return data;
   }
 
   useEffect(() => {
-    const setDay = () => {
-      const now = new Date();
-      const year = now.getFullYear();
-      const start = new Date(year, 0, 1);
-      const diff = now - start;
-      const oneDay = 1000 * 60 * 60 * 24;
-      const day = Math.floor(diff / oneDay);
-      setDayOfYear(day);
-      setTodayDayOfYear(day);
-    }
     const fetchInfo = async () => {
       const city = await AsyncStorage.getItem('city');
       setCity(city);
-      setDay();
       await getCheckedPrayer();
     };
 
@@ -347,14 +327,21 @@ export default function PrayerTimesScreen() {
         <View style={styles.prayerContainer}>
           {prayerTimes && !loading && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, time]) => {
             const index = prayers.indexOf(prayer);
-            const isChecked = index != undefined ? checkedPrayer[dayOfYear][index] : null;
+            const year = currentDate.getFullYear();
+            const dayOfYear = getDayOfYear(currentDate) - 1;
+            const isChecked = index != undefined ? checkedPrayer[year][dayOfYear][index] : null;
             const isNextPrayer = prayer === nextPrayer && (nextPrayer === 'Imsak' ? isOffsetDate(currentDate, 1) : isOffsetDate(currentDate, 0));
             return (
             <View key={prayer} style={[styles.prayerRow, isNextPrayer ? styles.nextPrayerFocus : {}]}>
               <Text style={styles.prayer}>{prayer}</Text>
               <View style={styles.timeAndCheckContainer}>
                 <Text style={[styles.time, prayer === 'Sunrise' && {marginRight: checkButtonWidth}]}>{time}</Text>
-                {prayer != 'Sunrise' ? <CheckButton isChecked={isChecked} onPress={() => updateCheckedPrayer(index)} /> : null}
+                {prayer !== 'Sunrise' && (
+                   <CheckButton 
+                    isChecked={isChecked} 
+                    onPress={() => updateCheckedPrayer(index)} 
+                    />
+                )}
               </View>
             </View>
             );

@@ -86,5 +86,9 @@ function isOffsetDate(date, offset) {
 
     return compare0.getTime() === compare1.getTime();
 }
+
+function getDayOfYear (date) {
+    return Math.ceil((date - new Date(date.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24));
+};
   
-export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed, isOffsetDate};
+export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed, isOffsetDate, getDayOfYear};
