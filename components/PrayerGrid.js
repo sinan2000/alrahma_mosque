@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity } from 'react-native';
 
-const PrayerGrid = ({ prayerTimes, navigation }) => {
+const PrayerGrid = ({ prayerTimes, navigation, nextPrayer }) => {
   const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   // Render each day of the week header
@@ -32,7 +32,7 @@ const PrayerGrid = ({ prayerTimes, navigation }) => {
 
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate('PrayerTracker')}
+      onPress={() => navigation.navigate('PrayerTracker', { nextPrayer })}
     >
       <View style={styles.container}>
         {renderDayHeader()}

@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function TrackerRow({ dayIndex, prayers, onTogglePrayer }) {
-    //console.log(dayIndex);
     return (
         <View style={styles.rowContainer}>
             {prayers.map((isPrayerDone, prayerIndex) => (

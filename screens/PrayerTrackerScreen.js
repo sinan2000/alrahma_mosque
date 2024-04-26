@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, FlatList } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
 import { Svg, Rect, Text as SvgText } from 'react-native-svg';
 import { FontAwesome } from '@expo/vector-icons';
 import { getDayOfYear } from '../utils';
@@ -13,12 +12,17 @@ const screenWidth = Dimensions.get('window').width;
 const margin = screenWidth * 0.1;
 const maxBarWidth = screenWidth  - (margin * 2);
 
-export default function PrayerTrackerScreen() {
+const window = Dimensions.get('window');
+const height_scale = window.height / 100;
+const width_scale = window.width / 100;
+
+export default function PrayerTrackerScreen({ route }) {
     const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    const {checkedPrayer, loading, togglePrayer, checkPrayedForDate} = useContext(PrayerContext);
+    const {checkedPrayer, togglePrayer, checkPrayedForDate} = useContext(PrayerContext);
     const [year, setYear] = useState(new Date().getFullYear());
     const [startIndex, setStartIndex] = useState(0);
     const [endIndex, setEndIndex] = useState(0);
+    const { nextPrayer } = route.params;
 
     useEffect(() => {
         const updates = () => {
@@ -30,6 +34,7 @@ export default function PrayerTrackerScreen() {
             setYear(newYear);
             setStartIndex(start);
             setEndIndex(end);
+            checkPrayedForDate(currentDate);
         };
 
         updates();
@@ -57,7 +62,7 @@ export default function PrayerTrackerScreen() {
     const PrayerNamesHeader = () => {
         return (
             <View style={styles.prayerNamesHeaderRow}>
-                <View style={{paddingHorizontal: 20}} />
+                <View style={{paddingHorizontal: width_scale * 4.7}} />
                 {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayerName, index) => (
                     <Text key={index} style={styles.prayerName}>
                         {prayerName}
@@ -83,7 +88,25 @@ export default function PrayerTrackerScreen() {
         ));
     };
 
+    const isValidToggle = (dayIndex, prayerIndex) => {
+        console.log(dayIndex, prayerIndex, nextPrayer);
+        const today = new Date();
+        const day = new Date(year, currentDate.getMonth(), dayIndex + 1);
+        const isFutureDate = day > today;
+        if (isFutureDate) {
+            return false;
+        }
+        console.log(day.toDateString(), today.toDateString());
+        if(day.toDateString() === today.toDateString()) {
+            const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            const current_index = prayers.indexOf(nextPrayer) - 1;
+            return prayerIndex <= current_index;
+        }
+        return true;
+    };
+
     const updateCheckedPrayer = async (dayIndex, prayerIndex) => {
+        if(!isValidToggle(dayIndex, prayerIndex)) return;
         const year = currentDate.getFullYear();
         const changeDay = new Date(year, currentDate.getMonth(), dayIndex + 1);
         const dayOfYear = getDayOfYear(changeDay);
@@ -103,7 +126,7 @@ export default function PrayerTrackerScreen() {
                     <FontAwesome name="angle-right" size={40} color="black" />
                 </TouchableOpacity>
             </View>
-            <Text style={{textAlign: 'center', marginBottom: 10, fontWeight: 'bold',}}>
+            <Text style={{textAlign: 'center', marginBottom: height_scale * 2, fontWeight: 'bold',}}>
                 Prayer Completion Rate
             </Text>
             <Svg height="40" width="100%">
@@ -126,7 +149,7 @@ export default function PrayerTrackerScreen() {
                 <SvgText
                     fill="black"
                     stroke="none"
-                    fontSize="20"
+                    fontSize={width_scale * 4.7}
                     fontWeight="bold"
                     x={screenWidth / 2}
                     y="20"
@@ -136,8 +159,8 @@ export default function PrayerTrackerScreen() {
                     {`${calculatePrayersCompleted()}%`}
                 </SvgText>
             </Svg>
+            <PrayerNamesHeader />
             <ScrollView style={styles.daysContainer}>
-                <PrayerNamesHeader />
                 {renderDays()}
             </ScrollView>
         </View>
@@ -147,50 +170,48 @@ export default function PrayerTrackerScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 10,
+        padding: width_scale * 2.35,
         backgroundColor: '#f2f1f6',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20
+        marginBottom: height_scale * 2,
     },
     monthYearText: {
-        fontSize: 18,
+        fontSize: width_scale * 4.2,
         fontWeight: 'bold',
         color: 'black'
     },
     dayRow: {
         flexDirection: 'row',
-        marginBottom: 5,
+        marginBottom: height_scale * 1,
         justifyContent: 'space-between',
         backgroundColor: '#dddee3',
         borderRadius: 10,
-        marginBottom: 10,
     },
     dayLabel: {
-        marginTop: 10,
+        marginTop: height_scale * 1,
         //textAlign: 'right',
-        marginLeft: 20,
+        marginLeft: width_scale * 4.7,
         color: 'black',
-        fontSize: 20,
+        fontSize: width_scale * 4.7,
         fontWeight: 'bold',
     },
     daysContainer: {
         flex: 1,
-        marginTop: 10,
+        marginTop: height_scale,
     },
     prayerNamesHeaderRow: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        paddingHorizontal: 10,
-        marginBottom: 15,
+        paddingHorizontal: width_scale * 2.35,
+        marginTop: height_scale * 1.5,
     },
     prayerName: {
-        //paddingHorizontal: 15,
         textAlign: 'center',
         color: 'black',
-        fontSize: 16,
+        fontSize: width_scale * 3.7,
     },
 });
