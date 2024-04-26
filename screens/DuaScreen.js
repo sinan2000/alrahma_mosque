@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, Dimensions } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import SegmentedControlTabs from 'react-native-segmented-control-tabs';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+const window = Dimensions.get('window');
+const height_scale = window.height / 100;
+const width_scale = window.width / 100;
 
 const duaData = [
     {
@@ -92,22 +97,20 @@ const dhikrData = [
 const Item = ( {arabic, english, pronunciation, title, isDhikr, onIncrement, onReset, count } ) => {
     return (
         <View style={styles.itemContainer}>
-            {isDhikr && 
-                <Text style={styles.boldTitle}>{title}</Text>
-            }
+            {isDhikr && <Text style={styles.boldTitle}>{title}</Text>}
             <Text style={styles.arabicText}>{arabic}</Text>
             <Text style={styles.englishText}>{english}</Text>
             <Text style={styles.pronunciationText}>{pronunciation}</Text>
             {isDhikr && (
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.resetButton} onPress={onReset}>
-                        <Text style={styles.buttonText}>Reset</Text>
-                    </TouchableOpacity>
-                <View style={{ flexDirection: 'column', alignItems: 'flex-end', flex: 1 }}>
+                <View style={styles.counterContainer}>
                     <Text style={styles.addButtonLabel}>Click to add</Text>
-                    <TouchableOpacity style={styles.counterButton} onPress={onIncrement}>
-                        <Text style={styles.buttonText}>{count}</Text>
-                    </TouchableOpacity>
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity style={styles.resetButton} onPress={onReset}>
+                            <MaterialCommunityIcons name='restart' size={20} color="white" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.counterButton} onPress={onIncrement}>
+                            <Text style={styles.buttonText}>{count}</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             )}
@@ -138,7 +141,7 @@ export default function DuaScreen() {
 
     return (
         <ScrollView style={styles.container}>
-            <View style={{ marginTop: 20, alignItems:'center'}}>
+            <View style={{ marginTop: height_scale * 2, alignItems:'center'}}>
             <SegmentedControlTabs
                 values={[
                     <Text>Duas</Text>, 
@@ -202,65 +205,77 @@ const styles = StyleSheet.create({
     },
     itemContainer: {
       backgroundColor: 'white',
-      padding: 16,
-      //marginBottom: 10,
-      marginHorizontal: 16,
+      padding: width_scale * 3.7,
+      marginHorizontal: width_scale * 3.7,
       borderRadius: 8,
       elevation: 1,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
       shadowRadius: 1,
-      marginTop: 15,
+      marginTop: height_scale * 1.5,
     },
     arabicText: {
-      fontSize: 20,
+      fontSize: width_scale * 4.7,
       textAlign: 'right',
       //fontFamily: 'Traditional Arabic',
-      marginBottom: 8,
+      marginBottom: height_scale * 0.8,
     },
     englishText: {
-      fontSize: 16,
-      marginBottom: 6,
+      fontSize: width_scale * 3.7,
+      marginBottom: height_scale * 0.6,
     },
     pronunciationText: {
-      fontSize: 14,
+      fontSize: width_scale * 3.3,
       color: 'gray',
     },
     buttonContainer: {
-        marginTop: 10,
+        marginTop: height_scale,
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '100%',
     },
     counterButton: {
         backgroundColor: '#0e9d87',
-        //padding: 10,
         borderRadius: 20,
-        height: 40,
-        width: 40,
+        height: width_scale * 9.4,
+        width: width_scale * 9.4,
         alignItems: 'center',
         justifyContent: 'center',
+        marginRight: width_scale * 4,
     },
     resetButton: {
         backgroundColor: 'red',
-        padding: 10,
-        borderRadius: 5,
+        borderRadius: 20,
+        height: width_scale * 9.4,
+        width: width_scale * 9.4,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonText: {
         color: 'white',
         fontWeight: 'bold',
-        fontSize: 16,
+        fontSize: width_scale * 3.7,
     },
     boldTitle: {
         fontWeight: 'bold',
         fontSize: 16,
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: height_scale,
     },
     addButtonLabel: {
         color: 'gray',
-        fontSize: 14,
-        marginBottom: 5,
-    }
+        fontSize: width_scale * 3.3,
+        marginBottom: height_scale * 0.5,
+    },
+    counterContainer: {
+        alignItems: 'flex-end',
+        marginTop: height_scale,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        marginTop: height_scale * 0.5,
+    },
   });
