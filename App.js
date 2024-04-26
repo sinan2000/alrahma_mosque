@@ -13,8 +13,10 @@ import QiblaScreen from './screens/QiblaScreen';
 import MoreScreen from './screens/MoreScreen';
 import NamesScreen from './screens/NamesScreen';
 import DuaScreen from './screens/DuaScreen';
+import HijriScreen from './screens/HijriScreen';
 import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
+import * as Location from 'expo-location';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -127,6 +129,7 @@ export default function App() {
         return;
       }
       const location = await getLocation();
+      console.log(location);
       if (location) {
         await setCityAndCountry(location);
       } else {
@@ -203,6 +206,27 @@ export default function App() {
             tabBarIcon: ({ focused, color, size }) => (
               <Image 
                 source={require('./assets/qibla.png')}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: focused ? '#0e9d87' : color
+                }}
+              />
+            ),
+            tabBarActiveTintColor: '#0e9d87',
+          }}
+        />
+        <Tab.Screen 
+          name='Hijri'
+          component={HijriScreen}
+          options={{
+            headerShown: true,
+            title: 'Hijri Calendar',
+            tabBarLabel: 'Calendar',
+            tabBarActiveTintColor: '#0e9d87',
+            tabBarIcon: ({ focused, color, size }) => (
+              <Image 
+                source={require('./assets/hijri.png')}
                 style={{
                   width: size,
                   height: size,
