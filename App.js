@@ -10,6 +10,7 @@ import LocalSplashScreen from './screens/SplashScreen';
 import PrayerTimesScreen from './screens/PrayerTimesScreen';
 import PrayerTrackerScreen from './screens/PrayerTrackerScreen';
 import QiblaScreen from './screens/QiblaScreen';
+import MoreScreen from './screens/MoreScreen';
 import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
 
@@ -162,7 +163,8 @@ export default function App() {
           name='Qibla' 
           component={QiblaScreen} 
           options={{
-            headerShown: false,
+            headerShown: true,
+            title: 'Qibla Direction',
             tabBarLabel: 'Qibla',
             tabBarActiveTintColor: '#0e9d87',
             tabBarIcon: ({ focused, color, size }) => (
@@ -178,6 +180,27 @@ export default function App() {
             tabBarActiveTintColor: '#0e9d87',
           }}
         />
+        <Tab.Screen
+          name='More'
+          component={MoreScreen}
+          options={{
+            headerShown: true,
+            title: 'More',
+            tabBarLabel: 'More',
+            tabBarActiveTintColor: '#0e9d87',
+            tabBarIcon: ({ focused, color, size }) => (
+              <Image 
+                source={require('./assets/more.png')}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: focused ? '#0e9d87' : color
+                }}
+              />
+            ),
+            tabBarActiveTintColor: '#0e9d87',
+          }}
+          />
       </Tab.Navigator>
     </NavigationContainer>
     </PrayerProvider>
