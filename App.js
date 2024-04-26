@@ -9,6 +9,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import LocalSplashScreen from './screens/SplashScreen';
 import PrayerTimesScreen from './screens/PrayerTimesScreen';
 import PrayerTrackerScreen from './screens/PrayerTrackerScreen';
+import QiblaScreen from './screens/QiblaScreen';
 import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
 
@@ -156,6 +157,26 @@ export default function App() {
             ),
             tabBarActiveTintColor: '#0e9d87',
           }}  
+        />
+        <Tab.Screen 
+          name='Qibla' 
+          component={QiblaScreen} 
+          options={{
+            headerShown: false,
+            tabBarLabel: 'Qibla',
+            tabBarActiveTintColor: '#0e9d87',
+            tabBarIcon: ({ focused, color, size }) => (
+              <Image 
+                source={require('./assets/qibla.png')}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: focused ? '#0e9d87' : color
+                }}
+              />
+            ),
+            tabBarActiveTintColor: '#0e9d87',
+          }}
         />
       </Tab.Navigator>
     </NavigationContainer>
