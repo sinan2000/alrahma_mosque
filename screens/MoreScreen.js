@@ -28,7 +28,7 @@ export default function MoreScreen({ navigation }) {
         title='Dua and Dhikr'
         description='Learn the supplications and remembrances'
         iconName={require('../assets/dua.png')}
-        onPress={() => navigation.navigate('DuaScreen')}
+        onPress={() => navigation.navigate('Dua')}
       />
       <Item 
         title='Settings'

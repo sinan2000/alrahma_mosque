@@ -12,6 +12,7 @@ import PrayerTrackerScreen from './screens/PrayerTrackerScreen';
 import QiblaScreen from './screens/QiblaScreen';
 import MoreScreen from './screens/MoreScreen';
 import NamesScreen from './screens/NamesScreen';
+import DuaScreen from './screens/DuaScreen';
 import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
 
@@ -58,6 +59,14 @@ function MoreStackScreen() {
         options={{
           headerShown: true,
           title: '99 Names of Allah SWT',
+        }}
+      />
+      <Stack.Screen
+        name="Dua"
+        component={DuaScreen}
+        option={{
+          headerShown: true,
+          title: 'Dua and Dhikr'
         }}
       />
     </Stack.Navigator>
