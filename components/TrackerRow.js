@@ -2,15 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function TrackerRow({ dayIndex, prayers, onTogglePrayer }) {
+    //console.log(dayIndex);
     return (
         <View style={styles.rowContainer}>
             {prayers.map((isPrayerDone, prayerIndex) => (
             <TouchableOpacity
                 key={prayerIndex}
-                style={styles.prayerCell}
+                style={[styles.prayerCell, isPrayerDone ? styles.prayed : styles.notPrayed]}
                 onPress={() => onTogglePrayer(dayIndex, prayerIndex)}
             >
-                <View style={isPrayerDone ? styles.prayed : styles.notPrayed} />
             </TouchableOpacity>
             ))}
         </View>
@@ -20,23 +20,23 @@ export default function TrackerRow({ dayIndex, prayers, onTogglePrayer }) {
 const styles = StyleSheet.create({
     rowContainer: {
       flexDirection: 'row',
-      justifyContent: 'space-around',
-      padding: 10
+      justifyContent: 'space-evenly',
+      paddingVertical: 10,
+      paddingHorizontal: 5,
     },
     prayerCell: {
-      width: 40,
-      height: 30,
+      width: 25,
+      height: 25,
       borderRadius: 15,
-      marginLeft: 5,
-      borderColor: '#323234',
-      borderWidth: 5,
+      borderWidth: 2,
       justifyContent: 'center',
-      alignItems: 'center'
+      alignItems: 'center',
+      marginHorizontal: 21,
     },
     prayed: {
-      backgroundColor: 'green'
+      backgroundColor: '#0e9d87',
     },
     notPrayed: {
-      backgroundColor: 'grey'
+      backgroundColor: 'transparent',
     }
   });

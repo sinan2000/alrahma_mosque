@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Svg, Rect } from 'react-native-svg';
+import { Svg, Rect, Text as SvgText } from 'react-native-svg';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDayOfYear } from '../utils';
@@ -9,8 +9,12 @@ import TrackerRow from '../components/TrackerRow';
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+const screenWidth = Dimensions.get('window').width;
+const margin = screenWidth * 0.1;
+const maxBarWidth = screenWidth  - (margin * 2);
+
 export default function PrayerTrackerScreen() {
-    const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));;
+    const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     const [prayerData, setPrayerData] = useState([]);
     const [currentData, setCurrentData] = useState([]);
     const [daysInMonth, setDaysInMonth] = useState(0);
@@ -39,8 +43,8 @@ export default function PrayerTrackerScreen() {
     useEffect(() => {
         const getCurrentData = async () => {
             const year = currentDate.getFullYear();
-            const startIndex = getDayOfYear(currentDate) - 1;
-            const endIndex = startIndex + daysInMonth;
+            const startIndex = getDayOfYear(currentDate);
+            const endIndex = startIndex + daysInMonth + 1;
             const data = prayerData[year].slice(startIndex, endIndex);
             setCurrentData(data);
         };
@@ -63,13 +67,14 @@ export default function PrayerTrackerScreen() {
     };
 
     const togglePrayer = (day, index) => {
-        // also put if isValid
         const updatedData = { ...prayerData };
+        console.log(currentDate);
         const year = currentDate.getFullYear();
-        const currIndex = day + getDayOfYear(currentDate) - 1;
+        const currIndex = day + getDayOfYear(currentDate);
+        console.log(day, currIndex, index);
         updatedData[year][currIndex][index] = !updatedData[year][currIndex][index];
         setPrayerData(updatedData);
-        AsyncStorage.setItem('aladhan', JSON.stringify(updatedData));
+        AsyncStorage.setItem('prayed', JSON.stringify(updatedData));
     };
 
     const renderDays = () => {
@@ -103,21 +108,56 @@ export default function PrayerTrackerScreen() {
         return Math.round((completed / total) * 100);
     };
 
+    const calculateBarWidth = () => {
+        const filledWidth = calculatePrayersCompleted() / 100 * maxBarWidth;
+        return filledWidth;
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => swipeMonth(-1)}>
-                    <FontAwesome name="angle-left" size={40} color="white" />
+                    <FontAwesome name="angle-left" size={40} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.monthYearText}>
                     {currentDate && `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
                 </Text>
                 <TouchableOpacity onPress={() => swipeMonth(1)}>
-                    <FontAwesome name="angle-right" size={40} color="white" />
+                    <FontAwesome name="angle-right" size={40} color="black" />
                 </TouchableOpacity>
             </View>
+            <Text style={{textAlign: 'center', marginBottom: 10, fontWeight: 'bold',}}>
+                Prayer Completion Rate
+            </Text>
             <Svg height="40" width="100%">
-                <Rect x="0%" y="0" width={`${calculatePrayersCompleted()}%`} height="100%" fill="green" />
+                <Rect
+                    x={margin}
+                    y="0"
+                    width={maxBarWidth}
+                    height="100%"
+                    fill="none"
+                    stroke="black"
+                    strokeWidth="2"
+                />
+                <Rect 
+                    x={margin} 
+                    y="0" 
+                    width={calculateBarWidth()} 
+                    height="100%" 
+                    fill="#0e9d87" 
+                />
+                <SvgText
+                    fill="black"
+                    stroke="none"
+                    fontSize="20"
+                    fontWeight="bold"
+                    x={screenWidth / 2}
+                    y="20"
+                    textAnchor="middle"
+                    alignmentBaseline="middle"
+                >
+                    {`${calculatePrayersCompleted()}%`}
+                </SvgText>
             </Svg>
             <ScrollView style={styles.daysContainer}>
                 <PrayerNamesHeader />
@@ -131,7 +171,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
-        backgroundColor: '#000',
+        backgroundColor: '#f2f1f6',
     },
     header: {
         flexDirection: 'row',
@@ -142,21 +182,27 @@ const styles = StyleSheet.create({
     monthYearText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'white'
+        color: 'black'
     },
     dayRow: {
         flexDirection: 'row',
         marginBottom: 5,
-        alignItems: 'center'
+        justifyContent: 'space-between',
+        backgroundColor: '#dddee3',
+        borderRadius: 10,
+        marginBottom: 10,
     },
     dayLabel: {
-        width: 50,
-        textAlign: 'right',
-        marginRight: 10,
-        color: 'white'
+        marginTop: 10,
+        //textAlign: 'right',
+        marginLeft: 20,
+        color: 'black',
+        fontSize: 20,
+        fontWeight: 'bold',
     },
     daysContainer: {
-        flex: 1
+        flex: 1,
+        marginTop: 10,
     },
     prayerNamesHeaderRow: {
         flexDirection: 'row',
@@ -166,8 +212,8 @@ const styles = StyleSheet.create({
     },
     prayerName: {
         //paddingHorizontal: 15,
-        width: 40,
         textAlign: 'center',
-        color: 'white'
+        color: 'black',
+        fontSize: 16,
     },
 });

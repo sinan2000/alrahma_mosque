@@ -20,12 +20,18 @@ function PrayerStackScreen() {
       <Stack.Screen 
         name="PrayerTimes" 
         component={PrayerTimesScreen} 
-        options={{ headerShown: true, title: 'Prayer Times'}} 
+        options={{ 
+          headerShown: true, 
+          title: 'Prayer Times'
+        }} 
       />
       <Stack.Screen 
         name="PrayerTracker" 
         component={PrayerTrackerScreen} 
-        options={{ headerShown: true, title: 'Prayer Tracker' }}
+        options={{ 
+          headerShown: true, 
+          title: 'Prayer Tracker',
+        }}
       />
     </Stack.Navigator>
   );
@@ -148,7 +154,7 @@ export default function App() {
         initialRouteName='PrayerTimes'
         screenOptions={{
           tabBarActiveTintColor: '#0e9d87',
-          tabBarStyle: { backgroundColor: '#f7f7f7' },
+          tabBarStyle: { backgroundColor: '#f3f4f8' },
         }}
       >
         <Tab.Screen 

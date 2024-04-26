@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
-import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed, isOffsetDate, getDayOfYear } from '../utils';
+import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed, isOffsetDate, getDayOfYear, generatePrayed} from '../utils';
 
 const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
 const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
@@ -103,8 +103,9 @@ export default function PrayerTimesScreen( { navigation }) {
 
   const checkPrayedForNewDate = async (date) => {
       // Check if prayed data is stored
-      const years = getKeysToPrayed(currentDate);
+      const years = getKeysToPrayed(date);
       let update = false;
+      let prayed = {...checkedPrayer};
 
       years.forEach((year) => {
         if (!checkedPrayer[year]) {
@@ -114,7 +115,7 @@ export default function PrayerTimesScreen( { navigation }) {
       })
       
       if(update){
-        setCheckedPrayer({...prayed});
+        setCheckedPrayer(prayed);
         await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
       }
   };
@@ -199,7 +200,6 @@ export default function PrayerTimesScreen( { navigation }) {
     const dayOfYear = getDayOfYear(currentDate) - 1;
     let updatedPrayer = { ...checkedPrayer };
     updatedPrayer[year][dayOfYear][index] = !updatedPrayer[year][dayOfYear][index];
-
     setCheckedPrayer(updatedPrayer);
     await AsyncStorage.setItem('prayed', JSON.stringify(updatedPrayer));
   };
@@ -217,27 +217,34 @@ export default function PrayerTimesScreen( { navigation }) {
   );
 
   const gridData = () => {
-    const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + (startOfWeek.getDay() === 0 ? -6 : 1));
+    const today = new Date();
+    const currentDay = today.getDay();
+    const diffToMonday = (currentDay + 6) % 7;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - diffToMonday);
 
-    const data = [];
-
-    for (let i = 0; i < 5; i++) {
+    const weekData = [];
+    for (let i = 0; i < 5; i++){
       const prayers = [];
+      for (let j = 0; j < 7; j++){
+        let day = new Date(monday);
+        day.setDate(day.getDate() + j);
 
-      for(let j = 0; j < 7; j++) {
-        const dayDate = new Date(startOfWeek);
-        dayDate.setDate(startOfWeek.getDate() + j);
-        const year = dayDate.getFullYear();
-        const dayOfYear = getDayOfYear(dayDate);
-        const dayData = checkedPrayer[year] ? checkedPrayer[year][dayOfYear - 1] : [0, 0, 0, 0, 0];
-        prayers.push(dayData[i]);
+        const year = day.getFullYear();
+        const dayOfYear = getDayOfYear(day) - 1;
+        
+        const exists = checkedPrayer[year] && checkedPrayer[year][dayOfYear];
+        const data = exists ? checkedPrayer[year][dayOfYear] : [0, 0, 0, 0, 0];
+        prayers.push(data[i]);
       }
-
-      data.push({ time: gridNames[i], days: prayers });
+      
+      weekData.push({
+        time: gridNames[i],
+        days: prayers
+      });
     }
 
-    return data;
+    return weekData;
   }
 
   useEffect(() => {
