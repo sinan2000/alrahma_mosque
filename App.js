@@ -11,6 +11,7 @@ import PrayerTimesScreen from './screens/PrayerTimesScreen';
 import PrayerTrackerScreen from './screens/PrayerTrackerScreen';
 import QiblaScreen from './screens/QiblaScreen';
 import MoreScreen from './screens/MoreScreen';
+import NamesScreen from './screens/NamesScreen';
 import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
 
@@ -34,6 +35,29 @@ function PrayerStackScreen() {
         options={{ 
           headerShown: true, 
           title: 'Prayer Tracker',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function MoreStackScreen() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="More"
+        component={MoreScreen}
+        options={{
+          headerShown: true,
+          title: 'More',
+        }}
+      />
+      <Stack.Screen
+        name="Names"
+        component={NamesScreen}
+        options={{
+          headerShown: true,
+          title: '99 Names of Allah SWT',
         }}
       />
     </Stack.Navigator>
@@ -181,11 +205,10 @@ export default function App() {
           }}
         />
         <Tab.Screen
-          name='More'
-          component={MoreScreen}
+          name='Additional' 
+          component={MoreStackScreen} 
           options={{
-            headerShown: true,
-            title: 'More',
+            headerShown: false,
             tabBarLabel: 'More',
             tabBarActiveTintColor: '#0e9d87',
             tabBarIcon: ({ focused, color, size }) => (
@@ -199,8 +222,8 @@ export default function App() {
               />
             ),
             tabBarActiveTintColor: '#0e9d87',
-          }}
-          />
+          }}  
+        />
       </Tab.Navigator>
     </NavigationContainer>
     </PrayerProvider>

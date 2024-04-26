@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { Svg, Rect, Text as SvgText } from 'react-native-svg';
 import { FontAwesome } from '@expo/vector-icons';
 import { getDayOfYear } from '../utils';

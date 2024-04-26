@@ -22,7 +22,7 @@ export default function MoreScreen({ navigation }) {
         title='99 Names of Allah SWT'
         description='Learn the beautiful names of Allah SWT'
         iconName={require('../assets/names.png')}
-        onPress={() => navigation.navigate('NamesScreen')}
+        onPress={() => navigation.navigate('Names')}
       />
       <Item 
         title='Dua and Dhikr'
