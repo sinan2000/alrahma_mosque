@@ -9,6 +9,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import LocalSplashScreen from './screens/SplashScreen';
 import PrayerTimesScreen from './screens/PrayerTimesScreen';
 import PrayerTrackerScreen from './screens/PrayerTrackerScreen';
+import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
 
 const Tab = createBottomTabNavigator();
@@ -118,29 +119,7 @@ export default function App() {
       }
     };
 
-    const checkPrayed = async () => {
-      // Check if prayed data is stored
-      let prayed = await AsyncStorage.getItem('prayed');
-      prayed = prayed ? JSON.parse(prayed) : {};
-      const now = new Date();
-      const years = getKeysToPrayed(now);
-
-      let update = false;
-
-      years.forEach((year) => {
-        if (!prayed[year]) {
-          prayed[year] = generatePrayed(year);
-          update = true;
-        }
-      })
-      
-      if(update){
-        await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
-      }
-    };
-
     checkStorage();
-    checkPrayed();
     checkAladhan();
   }, []);
 
@@ -149,6 +128,7 @@ export default function App() {
   }
 
   return (
+    <PrayerProvider>
     <NavigationContainer>
       <Tab.Navigator 
         initialRouteName='PrayerTimes'
@@ -179,5 +159,6 @@ export default function App() {
         />
       </Tab.Navigator>
     </NavigationContainer>
+    </PrayerProvider>
   );
 }

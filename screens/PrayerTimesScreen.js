@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,7 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
-import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, getKeysToPrayed, isOffsetDate, getDayOfYear, generatePrayed} from '../utils';
+import { PrayerContext } from '../PrayerContext';
+import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, isOffsetDate, getDayOfYear} from '../utils';
 
 const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
 const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
@@ -21,8 +22,7 @@ export default function PrayerTimesScreen( { navigation }) {
   const [hijriDate, setHijriDate] = useState('');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [checkButtonWidth, setCheckButtonWidth] = useState(0);
-  const [checkedPrayer, setCheckedPrayer] = useState({});
-  const [loading, setLoading] = useState(true);
+  const {checkedPrayer, loading, togglePrayer, checkPrayedForDate} = useContext(PrayerContext);
   const countdownRef = useRef(null);
 
   const getNextPrayer = () => {
@@ -101,31 +101,12 @@ export default function PrayerTimesScreen( { navigation }) {
     }
   };
 
-  const checkPrayedForNewDate = async (date) => {
-      // Check if prayed data is stored
-      const years = getKeysToPrayed(date);
-      let update = false;
-      let prayed = {...checkedPrayer};
-
-      years.forEach((year) => {
-        if (!checkedPrayer[year]) {
-          prayed[year] = generatePrayed(year);
-          update = true;
-        }
-      })
-      
-      if(update){
-        setCheckedPrayer(prayed);
-        await AsyncStorage.setItem('prayed', JSON.stringify(prayed));
-      }
-  };
-
   const changeDay = (direction) => {
     // Changes the selected day
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + direction);
     checkTimesForNewDate(newDate);
-    checkPrayedForNewDate(newDate);
+    checkPrayedForDate(newDate);
     setCurrentDate(newDate);
   };
 
@@ -168,16 +149,6 @@ export default function PrayerTimesScreen( { navigation }) {
         return { source: moonIcon, style: style };
     }
   };
-  
-  const getCheckedPrayer = async () => {
-    // Sets the checked prayer object
-    const object = await AsyncStorage.getItem('prayed');
-    const data = object ? JSON.parse(object) : {};
-    if (data) {
-      setCheckedPrayer(data);
-      setLoading(false);
-    };
-  };
 
   const isValidToggle = (index) => {
     const today = new Date();
@@ -193,15 +164,10 @@ export default function PrayerTimesScreen( { navigation }) {
   };
 
   const updateCheckedPrayer = async (index) => {
-    if (!isValidToggle(index)) {
-      return;
-    };
+    if (!isValidToggle(index)) return;
     const year = currentDate.getFullYear();
     const dayOfYear = getDayOfYear(currentDate) - 1;
-    let updatedPrayer = { ...checkedPrayer };
-    updatedPrayer[year][dayOfYear][index] = !updatedPrayer[year][dayOfYear][index];
-    setCheckedPrayer(updatedPrayer);
-    await AsyncStorage.setItem('prayed', JSON.stringify(updatedPrayer));
+    togglePrayer(year, dayOfYear, index);
   };
 
   const CheckButton = ({ isChecked, onPress }) => (
@@ -251,7 +217,6 @@ export default function PrayerTimesScreen( { navigation }) {
     const fetchInfo = async () => {
       const city = await AsyncStorage.getItem('city');
       setCity(city);
-      await getCheckedPrayer();
     };
 
     fetchInfo();

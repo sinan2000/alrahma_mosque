@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import React, { useContext, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, FlatList } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Svg, Rect, Text as SvgText } from 'react-native-svg';
 import { FontAwesome } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDayOfYear } from '../utils';
+import { PrayerContext } from '../PrayerContext';
 import TrackerRow from '../components/TrackerRow';
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -15,43 +15,44 @@ const maxBarWidth = screenWidth  - (margin * 2);
 
 export default function PrayerTrackerScreen() {
     const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    const [prayerData, setPrayerData] = useState([]);
-    const [currentData, setCurrentData] = useState([]);
-    const [daysInMonth, setDaysInMonth] = useState(0);
+    const {checkedPrayer, loading, togglePrayer, checkPrayedForDate} = useContext(PrayerContext);
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [startIndex, setStartIndex] = useState(0);
+    const [endIndex, setEndIndex] = useState(0);
 
     useEffect(() => {
-        const getPrayerData = async () => {
-            const prayed = await AsyncStorage.getItem('prayed');
-            const data = prayed ? JSON.parse(prayed) : {};
-            setPrayerData(data);
-        }
+        const updates = () => {
+            const newYear = currentDate.getFullYear();
+            const start = getDayOfYear(currentDate);
+            const daysInMonth = new Date(newYear, currentDate.getMonth() + 1, 0).getDate();
+            const end = start + daysInMonth - 1;
 
-        getPrayerData();
-    }, []);
+            setYear(newYear);
+            setStartIndex(start);
+            setEndIndex(end);
+        };
 
-    useEffect(() => {
-        const getDaysInMonth = () => {
-            const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-            setDaysInMonth(date.getDate());
-        }
-        
-        if(currentDate){
-            getDaysInMonth();
-        }
+        updates();
     }, [currentDate]);
 
-    useEffect(() => {
-        const getCurrentData = async () => {
-            const year = currentDate.getFullYear();
-            const startIndex = getDayOfYear(currentDate);
-            const endIndex = startIndex + daysInMonth + 1;
-            const data = prayerData[year].slice(startIndex, endIndex);
-            setCurrentData(data);
-        };
-        if (prayerData[currentDate.getFullYear()]){
-            getCurrentData();
-        };
-    }, [prayerData, currentDate]);
+    const swipeMonth = (direction) => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1));
+    };
+
+    const calculatePrayersCompleted = () => {
+        // if ... return 0
+        const prayers = checkedPrayer[year].slice(startIndex, endIndex);
+
+        const total = (endIndex - startIndex) * 5;
+        const completed = prayers.flat().filter(Boolean).length;
+
+        return Math.round((completed / total) * 100);
+    };
+
+    const calculateBarWidth = () => {
+        const filledWidth = calculatePrayersCompleted() / 100 * maxBarWidth;
+        return filledWidth;
+    }
 
     const PrayerNamesHeader = () => {
         return (
@@ -66,52 +67,28 @@ export default function PrayerTrackerScreen() {
         );
     };
 
-    const togglePrayer = (day, index) => {
-        const updatedData = { ...prayerData };
-        console.log(currentDate);
-        const year = currentDate.getFullYear();
-        const currIndex = day + getDayOfYear(currentDate);
-        console.log(day, currIndex, index);
-        updatedData[year][currIndex][index] = !updatedData[year][currIndex][index];
-        setPrayerData(updatedData);
-        AsyncStorage.setItem('prayed', JSON.stringify(updatedData));
-    };
-
     const renderDays = () => {
-        if(!currentDate || !currentData || currentData.length === 0) {
-            return null;
-        }
+        // return null
+        const data = checkedPrayer[year].slice(startIndex, endIndex);
 
-        return currentData.map((prayers, dayIndex) => (
+        return data.map((prayers, dayIndex) => (
                 <View key={dayIndex} style={styles.dayRow}>
                     <Text style={styles.dayLabel}>{dayIndex + 1}</Text>
                     <TrackerRow
                         dayIndex={dayIndex}
                         prayers={prayers}
-                        onTogglePrayer={togglePrayer}
+                        onTogglePrayer={updateCheckedPrayer}
                     />
                 </View>
         ));
     };
 
-    const swipeMonth = (direction) => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1));
+    const updateCheckedPrayer = async (dayIndex, prayerIndex) => {
+        const year = currentDate.getFullYear();
+        const changeDay = new Date(year, currentDate.getMonth(), dayIndex + 1);
+        const dayOfYear = getDayOfYear(changeDay);
+        togglePrayer(year, dayOfYear, prayerIndex);
     };
-
-    const calculatePrayersCompleted = () => {
-        if(!currentDate || !currentData.length) {
-            return 0;
-        }
-        const total = daysInMonth * 5;
-        const completed = currentData.flat().filter(Boolean).length;
-
-        return Math.round((completed / total) * 100);
-    };
-
-    const calculateBarWidth = () => {
-        const filledWidth = calculatePrayersCompleted() / 100 * maxBarWidth;
-        return filledWidth;
-    }
 
     return (
         <View style={styles.container}>
