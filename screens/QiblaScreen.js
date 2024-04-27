@@ -11,6 +11,7 @@ export default function QiblaScreen() {
     const [subscription, setSubscription] = useState(null);
     const [magnetometer, setMagnetometer] = useState(0);
     const [direction, setDirection] = useState(null);
+    const [compassLayout, setCompassLayout] = useState({width: 0, height: 0});
 
     useEffect(() => {
         _toggle();
@@ -19,6 +20,10 @@ export default function QiblaScreen() {
             _unsubscribe();
         };
     }, []);
+
+    useEffect(() => {
+        console.log('Direction: ', direction);
+    }, [direction]);
 
     async function getLocationAndCalculateQibla() {
         let { status } = await Location.requestForegroundPermissionsAsync();
@@ -50,6 +55,19 @@ export default function QiblaScreen() {
     const radiansToDegrees = (radians) => {
         return radians * 180 / Math.PI;
     };
+
+    const calculatePointerPosition = (angleDegrees, radius, pointerSize) => {
+        const angleRadians = degreesToRadians(angleDegrees) - Math.PI / 2; // Adjusting angle to point upwards
+        // Subtract half the size of the pointer to ensure the tip of the pointer image (assuming it's the center of the image) aligns with the edge of the compass.
+        const adjustedRadius = radius - pointerSize / 2; 
+        const left = adjustedRadius * Math.cos(angleRadians) + radius; // Offset to the edge of the compass
+        const top = adjustedRadius * Math.sin(angleRadians) + radius; // Offset to the edge of the compass
+        return { 
+            left: left - styles.compassPointer.width / 2, 
+            top: top - styles.compassPointer.height / 2, 
+        };
+      };
+      
 
     const _toggle = () => {
         if (subscription) {
@@ -121,17 +139,48 @@ export default function QiblaScreen() {
                     {_direction(_degree(magnetometer))}
                 </Text>
             </View>
-            <View style={styles.compassRow}>
-                <Image source={require('../assets/compass_pointer.png')} style={styles.compassPointer} />
+            <View style={styles.compassRow} onLayout={(event) => {
+                const { width } = event.nativeEvent.layout;
+                setCompassLayout({
+                    width: width,
+                    height: width,
+                })
+            }}>
+                <Image 
+                    source={require("../assets/compass_bg.png")} 
+                    style={[styles.compassBackground, {transform: [{ rotate: `${360 - magnetometer}deg` }]}]} />
+                
+                {direction && (
+                    <View style={{
+                        position: 'absolute',
+                        width: compassLayout.width,
+                        height: compassLayout.width,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    
+                    }}>
+                        <Image 
+                        source={require('../assets/compass_pointer.png')} 
+                        style={[
+                            styles.compassPointer,
+                            {
+                                ...calculatePointerPosition(360 - direction - magnetometer, compassLayout.width / 2, Math.max(styles.compassPointer.width, styles.compassPointer.height)),
+                            }
+                        ]} 
+                        />
+                    </View>
+                )}
                 <Text style={styles.degreeText}>
                     {_degree(magnetometer)}°
                 </Text>
-                <Image source={require("../assets/compass_bg.png")} style={[styles.compassBackground, {transform: [{ rotate: `${360 - magnetometer}deg` }]}]} />
             </View>
             <View style={styles.emptyRow}></View>
         </View>
     );
 };
+
+const pointerImageWidth = height / 26;
+const pointerImageHeight = height / 26;
 
 const styles = StyleSheet.create({
     container: {
@@ -159,8 +208,8 @@ const styles = StyleSheet.create({
     },
     compassPointer: {
         position: 'absolute',
-        top: 0,
-        height: height / 26,
+        height: pointerImageHeight,
+        width: pointerImageWidth,
         resizeMode: 'contain',
     },
     degreeText: {
