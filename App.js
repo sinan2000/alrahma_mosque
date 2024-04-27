@@ -15,7 +15,7 @@ import NamesScreen from './screens/NamesScreen';
 import DuaScreen from './screens/DuaScreen';
 import HijriScreen from './screens/HijriScreen';
 import { PrayerProvider } from './PrayerContext';
-import { getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed } from './utils';
+import { getKeysToFetch, fetchAndStorePrayerTimes, getHijriDate, getMonthlyCalendar } from './utils';
 import * as Location from 'expo-location';
 
 const Tab = createBottomTabNavigator();
@@ -129,7 +129,6 @@ export default function App() {
         return;
       }
       const location = await getLocation();
-      console.log(location);
       if (location) {
         await setCityAndCountry(location);
       } else {
@@ -157,8 +156,39 @@ export default function App() {
       }
     };
 
+    const fetchAndStoreHijriData = async (hijri, year, month) => {
+      if (!hijri[year] || !hijri[year][month]) {
+        const { calendar, appendix } = await getMonthlyCalendar(year, month);
+        if (!hijri[year]) {
+          hijri[year] = {};
+        }
+        hijri[year][month] = { calendar, holidays: appendix };
+      }
+    };
+
+    const checkHijri = async () => {
+      const storedData = await AsyncStorage.getItem('Hijri') || '{}';
+      let hijri = JSON.parse(storedData);
+      const today = new Date();
+      const hijriDate = await getHijriDate(today);
+
+      const prevMonth = hijriDate.month === 1 ? 12 : hijriDate.month - 1;
+      const prevYear = hijriDate.month === 1? hijriDate.year - 1 : hijriDate.year;
+      const nextMonth = hijriDate.month === 12 ? 1 : hijriDate.month + 1;
+      const nextYear = hijriDate.month === 12 ? hijriDate.year + 1 : hijriDate.year;
+
+      await Promise.all([
+        fetchAndStoreHijriData(hijri, prevYear, prevMonth),
+        fetchAndStoreHijriData(hijri, hijriDate.year, hijriDate.month),
+        fetchAndStoreHijriData(hijri, nextYear, nextMonth)
+      ]);
+
+      await AsyncStorage.setItem('Hijri', JSON.stringify(hijri));
+    };
+
     checkStorage();
     checkAladhan();
+    checkHijri();
   }, []);
 
   if (!fontsLoaded || isSplashScreenVisible) {

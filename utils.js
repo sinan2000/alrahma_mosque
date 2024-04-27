@@ -89,5 +89,48 @@ function isOffsetDate(date, offset) {
 function getDayOfYear (date) {
     return Math.ceil((date - new Date(date.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24));
 };
+
+function getEachDateIndex (date) {
+    const parts = date.split('-');
+    return {
+        year: parseInt(parts[2], 10),
+        month: parseInt(parts[1], 10),
+        day: parseInt(parts[0], 10)
+    };
+};
+
+async function getHijriDate (date) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const response = await fetch(`http://api.aladhan.com/v1/gToH?date=${day}-${month}-${year}`);
+    const data = await response.json();
+    const hijriDate = data.data.hijri.date;
+    const result = getEachDateIndex(hijriDate);
+    return result;
+};
+
+async function getMonthlyCalendar (hijriYear, hijriMonth) {
+    const response = await fetch(`http://api.aladhan.com/v1/hToGCalendar/${hijriMonth}/${hijriYear}`);
+    const json = await response.json();
+    const apiData = json.data;
+    const calendar = [];
+    const appendix = [];
+
+    apiData.forEach((element, index) => {
+        const { hijri, gregorian } = element;
+        calendar.push(gregorian.date);
+        if (hijri.holidays) {
+            hijri.holidays.forEach((holiday) => {
+                appendix.push({
+                    name: holiday,
+                    date: index + 1
+                })
+            });
+        }
+    })
+
+    return { calendar, appendix };
+};
   
-export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed, isOffsetDate, getDayOfYear};
+export {getKeyForMonth, getKeyForNextImsak, getKeysToFetch, fetchAndStorePrayerTimes, getKeysToPrayed, generatePrayed, isOffsetDate, getDayOfYear, getHijriDate, getMonthlyCalendar, getEachDateIndex};

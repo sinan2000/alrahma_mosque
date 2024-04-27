@@ -1,235 +1,76 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, View,  Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getHijriDate, getMonthlyCalendar, getEachDateIndex } from '../utils';
  
 const islamicMonths = ["Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani", "Jumada al-awwal", "Jumada al-thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"];
 const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function HijriScreen() {
-    const [hijriData, setHijriData] = useState({});
-    const [currentHijri, setCurrentHijri] = useState({});
-    const [shouldInitialize, setShouldInitialize] = useState(true);
-    const [loading, setLoading] = useState(false);
+    const [hijriDate, setHijriDate] = useState({ day: null, month: null, year: null});
+    const [hijriCalendar, setHijriCalendar] = useState({});
+    const [focusedDate, setFocusedDate] = useState('');
 
     useEffect(() => {
-        const checkStorage = async () => {
-            await AsyncStorage.removeItem('Hijri');
-            try {
-                const item = await AsyncStorage.getItem('Hijri');
-                const data = item !== null ? JSON.parse(item) : null;
-                if (data) {
-                    setHijriData(data);
-                } else {
-                    const currentDate = new Date();
-                    let fullData = {};
-                    for (let i = 0; i < 3; i++) {
-                        const month = currentDate.getMonth() + i;
-                        const year = currentDate.getFullYear();
-                        if (month > 12) {
-                            month = 1;
-                            year++;
-                        } else if (month < 1) {
-                            month = 12;
-                            year--;
-                        }
-                        const info = await fetchCalendar(month, year);
-                        const restructuredData = restructureData(info);
-                        fullData = mergeData(fullData, restructuredData);
-                    }
-                    await AsyncStorage.setItem('Hijri', JSON.stringify(fullData));
-                    setHijriData(fullData);
-                }
-            } catch (error) {
-                console.error(error);
-            }
+        const fetchHijriData = async () => {
+            const today = new Date();
+            const date = await getHijriDate(today);
+            setHijriDate(date);
+            setFocusedDate(date.day);
+
+            const storage = await AsyncStorage.getItem('Hijri') || '{}';
+            let hijri = JSON.parse(storage);
+            setHijriCalendar(hijri);
         };
 
-        checkStorage().then(() => {
-            const calendar = initializeCalendar(hijriData);
-            if (calendar) {
-                setCurrentHijri(calendar);
-            }
-        });
+        fetchHijriData();
     }, []);
 
-    useEffect(() => {
-        if (hijriData && shouldInitialize) {
-            const calendar = initializeCalendar(hijriData);
-            if (calendar) {
-                setCurrentHijri(calendar);
-            }
+    const fetchAndStoreHijriData = async (year, month) => {
+        const { calendar, appendix } = await getMonthlyCalendar(year, month);
+        const newHijri = {...hijriCalendar};
+        if (!newHijri[year]) {
+            newHijri[year] = {};
         }
-    }, [hijriData]);
-
-    const initializeCalendar = (hijriData) => {
-        const currentDate = new Date();
-        const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getFullYear()}`;
-        for (const year in hijriData) {
-            for (const month in hijriData[year]) {
-                if(hijriData[year][month].includes(formattedDate)) {
-                    return {year, month};
-                }
-            }
-        }
-        return null;
-    };
-
-    const fetchCalendar = async (month, year) => {
-        try {
-            response = await fetch(`http://api.aladhan.com/v1/gToHCalendar/${month}/${year}`);
-            const json = await response.json();
-            return json.data;
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const restructureData = (response) => {
-        const Hijri = {};
-
-        response.forEach((data) => {
-            const { hijri, gregorian } = data;
-            const year = hijri.year;
-            const month = hijri.month.number;
-            const day = parseInt(hijri.day, 10) - 1;
-
-            if (!Hijri[year]) {
-                Hijri[year] = {};
-            }
-            if (!Hijri[year][month]) {
-                Hijri[year][month] = new Array(30).fill(null);
-            }
-
-            Hijri[year][month][day] = gregorian.date;
-        })
-
-        return Hijri;
-    }
-
-    const getGregorianDate = (direction) => {
-        const { year, month } = currentHijri;
-        const dates = hijriData[year][month];
-
-        let targetDate = null;
-        if (direction === -1) {
-            targetDate = dates.find(date => date!== null);
-        } else {
-            for (let i = dates.length - 1; i >= 0; i--) {
-                if (dates[i] !== null) {
-                    targetDate = dates[i];
-                    break;
-                }
-            }
-        }
-
-        if (!targetDate) {
-            return null;
-        }
-        const [day, monthIndex, yearIndex] = targetDate.split('-').map(num => parseInt(num, 10));
-        if((direction === -1 && day > 1) || (direction === 1 && day < new Date(yearIndex, monthIndex, 0).getDate())) {
-            return { month: monthIndex, year: yearIndex };
-        } else {
-            if (direction === -1) {
-                const prevDate = new Date(yearIndex, monthIndex - 2, 1);
-                return { month: prevDate.getMonth() + 1, year: prevDate.getFullYear() };
-            } else {
-                const nextDate = new Date(yearIndex, monthIndex, 1);
-                return { month: nextDate.getMonth() + 1, year: nextDate.getFullYear() };
-            
-            }
-        }
-    }
-
-    const mergeData = (existingData, newData) => {
-        let current = JSON.parse(JSON.stringify(existingData));
-
-        for (const year of Object.keys(newData)) {
-            if (!current[year]) {
-                current[year] = {};
-            }
-            for (const month of Object.keys(newData[year])) {
-                if (!current[year][month]) {
-                    current[year][month] = newData[year][month];
-                }
-
-                newData[year][month].forEach((date, index) => {
-                    if (date && !current[year][month][index]) {
-                        current[year][month][index] = date;
-                    }
-                });
-            }
-        }
-
-        return current;
-    };
-
-    const isIslamicLeapYear = (year) => {
-        const leapYear = [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29];
-        return leapYear.includes(year % 30);
-    };
-
-    const noDaysInIslamicMonth = (month, year) => {
-        if (month % 2 === 1) {
-            return 30;
-        } else if (month === 12 && isIslamicLeapYear(year)) {
-            return 30;
-        }
-        return 29;
-    };
-
-    const currentDaysInIslamicMonth = (month, year) => {
-        const data = hijriData[year][month];
-        let count = 0;
-        data.forEach((date) => {
-            if (date) {
-                count++;
-            }
-        });
-        return count;
+        newHijri[year][month] = { calendar, holidays: appendix };
+        setHijriCalendar(newHijri);
     };
 
     const updateMonth = async (direction) => {
-        setLoading(true);
-        let newMonth = parseInt(currentHijri.month) + direction;
-        let newYear = parseInt(currentHijri.year);
-        if (newMonth < 1) {
-            newMonth = 12;
-            newYear--;
-        } else if (newMonth > 12) {
-            newMonth = 1;
-            newYear++;
+        setFocusedDate('');
+        let {day, month, year} = hijriDate;
+        if (month + direction > 12) {
+            month = 1;
+            year++;
+        } else if (month + direction < 1) {
+            month = 12;
+            year--;
+        } else {
+            month += direction;
         }
-        const { month, year } = getGregorianDate(direction);
 
-        if(!hijriData[newYear] || !hijriData[newYear][newMonth] || noDaysInIslamicMonth(newMonth, newYear) !== currentDaysInIslamicMonth(newMonth, newYear)) {
-            const apiData = await fetchCalendar(month, year);
-            const newMonthData = restructureData(apiData);
-
-            const updatedHijriData = mergeData(hijriData, newMonthData);
-            console.log(updatedHijriData);
-            setHijriData(updatedHijriData);
-            await AsyncStorage.setItem('Hijri', JSON.stringify(updatedHijriData));
+        if(!hijriCalendar[year] || !hijriCalendar[year][month]) {
+            await fetchAndStoreHijriData(year, month);
         }
-        setShouldInitialize(false);
-        setCurrentHijri({ year: newYear, month: newMonth });
-        setLoading(false);
+        setHijriDate({day, month, year});
+    };
+
+    const handleFocusedDate = (date) => {
+        const noDays = hijriCalendar[hijriDate.year][hijriDate.month].calendar.length;
+        if (date < 1 || date > noDays) return;
+        setFocusedDate(date);
     };
 
     const renderCalendarCells = () => {
-        if (loading || !hijriData || !currentHijri || !currentHijri.year || !currentHijri.month) {
-            return null;
-        }
+        if(!hijriDate.year || !hijriDate.month || !hijriCalendar[hijriDate.year] || !hijriCalendar[hijriDate.year][hijriDate.month]) return null;
 
         let cells = [];
-        const daysInMonth = noDaysInIslamicMonth(currentHijri.month, currentHijri.year);
-        const firstDayInGregorian = hijriData[currentHijri.year][currentHijri.month].find(date => date !== null);
-        console.log(currentHijri, firstDayInGregorian);
-        const formattedDate = firstDayInGregorian.split('-').reverse().join('-');
-        const date = new Date(formattedDate);
-        const offset = date.getDay() - 1;
-        console.log(hijriData);
-        console.log(formattedDate, date, offset);
+        const {day, month, year} = getEachDateIndex(hijriCalendar[hijriDate.year][hijriDate.month].calendar[0]);
+        const dayOfWeek = new Date(year, month - 1, day).getDay();
+        const offset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        console.log(new Date(year, month - 1, day), dayOfWeek, offset);
+        const numberOfDays = hijriCalendar[hijriDate.year][hijriDate.month].calendar.length;
 
         let dayHeaders = daysOfWeek.map((day, index) => (
             <Text key={`day-header-${index}`} style={styles.dayHeader}>
@@ -242,23 +83,30 @@ export default function HijriScreen() {
                 {dayHeaders}
             </View>
         );
-        
-        let dayNumber = 0;
+
+        let count = 0;
         for (let i = 0; i < 6; i++) {
             let week = [];
             for (let j = 0; j < 7; j++) {
-                let cellDayNumber;
-                if (i === 0 && j < offset) {
-                    cellDayNumber = null;
-                } else if (dayNumber < daysInMonth) {
-                    dayNumber++;
-                    cellDayNumber = dayNumber;
+                if (i === 5 && j === 0 && count >= numberOfDays) break;
+                let day = null;
+                if (i === 0 && j >= offset) {
+                    count++;
+                    day = count;
+                } else if (i > 0 && count < numberOfDays) {
+                    count++;
+                    day = count;
+                } else if (count >= numberOfDays) {
+                    count++;
                 }
-
+                const presser = count;
                 week.push(
-                    <View key={`cell-${i}-${j}`} style={styles.cell}>
-                        {cellDayNumber && <Text style={styles.textInCell}>{cellDayNumber}</Text>}
-                    </View>        
+                    <TouchableOpacity 
+                        key={`cell-${i}-${j}`} 
+                        style={[styles.cell, focusedDate === presser ? {backgroundColor: '#0e9d87'} : {}]} 
+                        onPress={() => handleFocusedDate(presser)}>
+                        {day && <Text style={styles.textInCell}>{day}</Text>}
+                    </TouchableOpacity>        
                 );
             }
             cells.push(
@@ -270,9 +118,65 @@ export default function HijriScreen() {
         return cells;
     };
 
+    const renderSelectedDate = () => {
+        if(!hijriDate.year || !hijriDate.month || !hijriCalendar[hijriDate.year] || !hijriCalendar[hijriDate.year][hijriDate.month]) return null;
+
+        if (focusedDate === '') return null;
+        const data = hijriCalendar[hijriDate.year][hijriDate.month].calendar[focusedDate - 1];
+        const { day, month, year } = getEachDateIndex(data);
+        const display = new Date(year, month - 1, day);
+        const options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        const locale = 'en-GB';
+        const formattedDate = display.toLocaleDateString(locale, options);
+        return (
+            <View style={styles.selectedDateContainer}>
+                <View style={styles.selectedDateTextContainer}>
+                    <Text style={styles.selectedDateText}>{formattedDate}</Text>
+                </View>
+            </View>
+        )
+    }
+
+    const renderHolidays = () => {
+        if(!hijriDate.year || !hijriDate.month || !hijriCalendar[hijriDate.year] || !hijriCalendar[hijriDate.year][hijriDate.month]) return null;
+        const data = hijriCalendar[hijriDate.year][hijriDate.month];
+        if (!data || !data.holidays || data.holidays.length === 0) return null;
+
+        return (
+            <View style={styles.holidaysContainer}>
+                <Text style={styles.holidaysHeader}>Holidays</Text>
+                {data.holidays.map((holiday, index) => {
+                    const dateIndex = holiday.date;
+                    const gregorianDate = data.calendar[dateIndex - 1];
+                    const { day, month, year } = getEachDateIndex(gregorianDate);
+                    const display = new Date(year, month - 1, day);
+                    const options = {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    };
+                    const locale = 'en-GB';
+                    const formattedDate = display.toLocaleDateString(locale, options);
+                    return (
+                    <View key={`holiday-${index}`} style={styles.holidayItem}>
+                        <Text style={styles.holidayName}>{holiday.name}</Text>
+                        <Text style={styles.holidayDate}>{holiday.date} {islamicMonths[hijriDate.month - 1]} {hijriDate.year} | {formattedDate}</Text>
+                    </View>
+                    );
+                })}
+            </View>
+        );
+    };
+
     return (
-        <View style={styles.container}>
-            {/* Header Section */}
+        <ScrollView style={styles.container}>
+
             <View style={styles.header}>
                 <TouchableOpacity 
                     style={styles.navButton}
@@ -280,8 +184,8 @@ export default function HijriScreen() {
                 >
                     <FontAwesome name="angle-left" size={24} color="black" />
                 </TouchableOpacity>
-                <Text style={styles.monthText}>{islamicMonths[currentHijri.month - 1]}</Text>
-                <Text style={styles.yearText}>{currentHijri.year}</Text>
+                <Text style={styles.monthText}>{hijriDate && islamicMonths[hijriDate.month - 1]}</Text>
+                <Text style={styles.yearText}>{hijriDate && hijriDate.year}</Text>
                 <TouchableOpacity 
                     style={styles.navButton}
                     onPress={() => updateMonth(1)}    
@@ -290,12 +194,12 @@ export default function HijriScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Calendar Grid */}
             <View style={styles.calendarGrid}>
-                {!loading && renderCalendarCells()}
+                {renderCalendarCells()}
             </View>
-
-        </View>
+            {renderSelectedDate()}
+            {renderHolidays()}
+        </ScrollView>
     );
 };
 
@@ -350,6 +254,51 @@ const styles = StyleSheet.create({
     },
     textInCell: {
         textAlign: 'center',
-        margin: 'auto'
-    }
+        margin: 'auto',
+        fontWeight: 'bold',
+    },
+    selectedDateContainer: {
+        alignItems: 'center',
+    },
+    selectedDateText: {
+        color: 'black',
+        fontSize: 16,
+    },
+    selectedDateTextContainer: {
+        borderWidth: 1,
+        borderColor: '#cccccc',
+        borderRadius: 10,
+        padding: 10,
+    },
+    holidaysContainer: {
+        marginTop: 0,
+        padding: 10,
+        width: '100%',
+    },
+    holidaysHeader: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    holidayName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'black',
+    },
+    holidayDate: {
+        fontSize: 14,
+        color: 'gray',
+        marginTop: 5,
+    },
+    holidayItem: {
+        padding: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#cccccc',
+        marginBottom: 10,
+        alignItems: 'flex-start',
+        marginHorizontal: 10,
+    },
 });
