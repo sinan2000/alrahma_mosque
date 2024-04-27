@@ -3,27 +3,42 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
  
-const islamicMonths = ["Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani", "Jumada al-awwal", "Jumada al-thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"]
+const islamicMonths = ["Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani", "Jumada al-awwal", "Jumada al-thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"];
+const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function HijriScreen() {
     const [hijriData, setHijriData] = useState({});
     const [currentHijri, setCurrentHijri] = useState({});
     const [shouldInitialize, setShouldInitialize] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const checkStorage = async () => {
+            await AsyncStorage.removeItem('Hijri');
             try {
-                const data = await AsyncStorage.getItem('Hijri');
+                const item = await AsyncStorage.getItem('Hijri');
+                const data = item !== null ? JSON.parse(item) : null;
                 if (data) {
-                    setHijriData(JSON.parse(data));
+                    setHijriData(data);
                 } else {
                     const currentDate = new Date();
-                    const month = currentDate.getMonth() + 1;
-                    const year = currentDate.getFullYear();
-                    const info = await fetchCalendar(month, year);
-                    const restructuredData = restructureData(info);
-                    await AsyncStorage.setItem('Hijri', JSON.stringify(restructuredData));
-                    setHijriData(info);
+                    let fullData = {};
+                    for (let i = 0; i < 3; i++) {
+                        const month = currentDate.getMonth() + i;
+                        const year = currentDate.getFullYear();
+                        if (month > 12) {
+                            month = 1;
+                            year++;
+                        } else if (month < 1) {
+                            month = 12;
+                            year--;
+                        }
+                        const info = await fetchCalendar(month, year);
+                        const restructuredData = restructureData(info);
+                        fullData = mergeData(fullData, restructuredData);
+                    }
+                    await AsyncStorage.setItem('Hijri', JSON.stringify(fullData));
+                    setHijriData(fullData);
                 }
             } catch (error) {
                 console.error(error);
@@ -111,7 +126,6 @@ export default function HijriScreen() {
         if (!targetDate) {
             return null;
         }
-
         const [day, monthIndex, yearIndex] = targetDate.split('-').map(num => parseInt(num, 10));
         if((direction === -1 && day > 1) || (direction === 1 && day < new Date(yearIndex, monthIndex, 0).getDate())) {
             return { month: monthIndex, year: yearIndex };
@@ -176,6 +190,7 @@ export default function HijriScreen() {
     };
 
     const updateMonth = async (direction) => {
+        setLoading(true);
         let newMonth = parseInt(currentHijri.month) + direction;
         let newYear = parseInt(currentHijri.year);
         if (newMonth < 1) {
@@ -192,19 +207,59 @@ export default function HijriScreen() {
             const newMonthData = restructureData(apiData);
 
             const updatedHijriData = mergeData(hijriData, newMonthData);
+            console.log(updatedHijriData);
             setHijriData(updatedHijriData);
+            await AsyncStorage.setItem('Hijri', JSON.stringify(updatedHijriData));
         }
         setShouldInitialize(false);
         setCurrentHijri({ year: newYear, month: newMonth });
+        setLoading(false);
     };
 
-    const renderEmptyCells = () => {
-        // Assuming a 6x7 grid for the calendar (6 weeks, 7 days a week)
+    const renderCalendarCells = () => {
+        if (loading || !hijriData || !currentHijri || !currentHijri.year || !currentHijri.month) {
+            return null;
+        }
+
         let cells = [];
+        const daysInMonth = noDaysInIslamicMonth(currentHijri.month, currentHijri.year);
+        const firstDayInGregorian = hijriData[currentHijri.year][currentHijri.month].find(date => date !== null);
+        console.log(currentHijri, firstDayInGregorian);
+        const formattedDate = firstDayInGregorian.split('-').reverse().join('-');
+        const date = new Date(formattedDate);
+        const offset = date.getDay() - 1;
+        console.log(hijriData);
+        console.log(formattedDate, date, offset);
+
+        let dayHeaders = daysOfWeek.map((day, index) => (
+            <Text key={`day-header-${index}`} style={styles.dayHeader}>
+                {day}
+            </Text>
+        ));
+    
+        cells.push(
+            <View key="day-headers" style={styles.weekRow}>
+                {dayHeaders}
+            </View>
+        );
+        
+        let dayNumber = 0;
         for (let i = 0; i < 6; i++) {
             let week = [];
             for (let j = 0; j < 7; j++) {
-                week.push(<View key={`cell-${i}-${j}`} style={styles.cell} />);
+                let cellDayNumber;
+                if (i === 0 && j < offset) {
+                    cellDayNumber = null;
+                } else if (dayNumber < daysInMonth) {
+                    dayNumber++;
+                    cellDayNumber = dayNumber;
+                }
+
+                week.push(
+                    <View key={`cell-${i}-${j}`} style={styles.cell}>
+                        {cellDayNumber && <Text style={styles.textInCell}>{cellDayNumber}</Text>}
+                    </View>        
+                );
             }
             cells.push(
                 <View key={`row-${i}`} style={styles.weekRow}>
@@ -237,7 +292,7 @@ export default function HijriScreen() {
 
             {/* Calendar Grid */}
             <View style={styles.calendarGrid}>
-                {renderEmptyCells()}
+                {!loading && renderCalendarCells()}
             </View>
 
         </View>
@@ -270,11 +325,13 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
+        width: '100%',
     },
     weekRow: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-around',
         alignItems: 'center',
+        width: '100%',
     },
     cell: {
         width: 50,
@@ -285,4 +342,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         margin: 2,
     },
+    dayHeader: {
+        width: 50,
+        textAlign: 'center',
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    textInCell: {
+        textAlign: 'center',
+        margin: 'auto'
+    }
 });
