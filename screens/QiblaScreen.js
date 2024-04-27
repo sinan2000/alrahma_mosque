@@ -2,36 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import { Magnetometer } from 'expo-sensors';
-import { setStatusBarBackgroundColor } from 'expo-status-bar';
+import { NOAA_API_KEY } from '@env';
 
 const KABA_LATITUDE = 21.422487;
 const KAABA_LONGITUDE = 39.826206;
 
 export default function QiblaScreen() {
     const [compassHeading, setCompassHeading] = useState(0);
+    const [magneticDeclination, setMagneticDeclination] = useState(0);
     const [direction, setDirection] = useState(0);
 
     useEffect(() => {
         Magnetometer.addListener((data) => {
             const { x, y } = data;
-            const heading = Math.atan2(y, x) * (180 / Math.PI) + 180;
-            setCompassHeading(heading);
+            let heading = Math.atan2(y, x) * (180 / Math.PI) + 180;
+            heading = (heading) % 360;
+            setCompassHeading(heading + magneticDeclination);
         });
 
-        (async () => {
-            let { status } = await Location.requestBackgroundPermissionsAsync();
+        async function getPosition(){
+            let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 console.error('Permission to access location was denied');
                 return;
             }
-            console.log("Getting location...");
             let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest});
             const { latitude, longitude } = location.coords;
-            console.log("Location: ", latitude, longitude)
+
+            const declination = await fetchMagneticDeclination(latitude, longitude);
+            setMagneticDeclination(declination);
+
             const qibla = calculateQiblaDirection(latitude, longitude);
-            console.log("calculating...");
             setDirection(qibla);
-        })();
+        };
+
+        getPosition();
 
         return () => {
             Magnetometer.removeAllListeners();
@@ -57,6 +62,19 @@ export default function QiblaScreen() {
     const radiansToDegrees = (radians) => {
         return radians * 180 / Math.PI;
     }
+
+    async function fetchMagneticDeclination (latitude, longitude) {
+        const url = `https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1=${latitude}&lon1=${longitude}&resultFormat=json&key=${NOAA_API_KEY}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log(data);
+            return data.declination;
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    };
 
     const compassRotation = compassHeading - direction;
     // TO CHECK AND ADD COMPASS AT BUILD

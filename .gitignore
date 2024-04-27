@@ -36,3 +36,4 @@ yarn-error.*
 
 # misc
 notes.txt
+.env
