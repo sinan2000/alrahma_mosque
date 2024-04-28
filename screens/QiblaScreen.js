@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 const KABA_LATITUDE = 21.422487;
 const KAABA_LONGITUDE = 39.826206;
 const { width, height } = Dimensions.get('window');
+const pointerImageWidth = 40;
+const pointerImageHeight = height / 26;
 
 export default function QiblaScreen() {
     const [subscription, setSubscription] = useState(null);
@@ -116,7 +118,23 @@ export default function QiblaScreen() {
 
     const _degree = (magnetometer) => {
         return magnetometer - 90 >= 0 ? magnetometer - 90 : magnetometer + 271;
-    }
+    };
+
+    const POZ = () => {
+        //console.log(compassLayout.width);
+        const radius = (width - 80) / 2;
+        const radians = degreesToRadians(360 - magnetometer + direction);
+        const offsetX = radius * Math.cos(radians);
+        const offsetY = radius * Math.sin(radians);
+        const adjustedX = radius + offsetX - (pointerImageWidth / 2);
+        const adjustedY = radius + offsetY - (pointerImageHeight / 2);
+        //console.log(radius, radians, offsetX, offsetY, adjustedX, adjustedY);
+        //console.log(center, radius, offsetX, offsetY, adjustedX, adjustedY);
+        return {
+            left: adjustedX,
+            top: adjustedY ,
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -126,10 +144,11 @@ export default function QiblaScreen() {
                 </Text>
             </View>
             <View style={styles.compassRow} onLayout={(event) => {
-                const { width } = event.nativeEvent.layout;
+                const { width,height } = event.nativeEvent.layout;
+                console.log(width, height);
                 setCompassLayout({
                     width: width,
-                    height: width,
+                    height: height,
                 })
             }}>
                 <Image 
@@ -149,13 +168,11 @@ export default function QiblaScreen() {
                         source={require('../assets/qibla.png')} 
                         style={[
                             styles.compassPointer,
-                            {
-                                ...calculatePointerPosition(360 - direction - magnetometer, compassLayout.width / 2, Math.max(styles.compassPointer.width, styles.compassPointer.height)),
-                            },
+                            POZ(),
                             {transform: [{ rotate: `${360 - magnetometer - direction}deg` }]}
                         ]} 
                         />
-                        <View style={[styles.alignmentDot, calculatePointerPosition(360 - direction - magnetometer, compassLayout.width / 2, Math.max(styles.compassPointer.width, styles.compassPointer.height))]} />
+                        <View style={[styles.alignmentDot, POZ()]} />
                         
                     </View>
                 )}
@@ -167,9 +184,6 @@ export default function QiblaScreen() {
         </View>
     );
 };
-
-const pointerImageWidth = 40;
-const pointerImageHeight = height / 26;
 
 const styles = StyleSheet.create({
     container: {
@@ -193,7 +207,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
-        width: width,
     },
     compassPointer: {
         position: 'absolute',
@@ -208,19 +221,12 @@ const styles = StyleSheet.create({
         position: 'absolute',
     },
     compassBackground: {
-        height: width - 80,
+        width: width - 80,
         justifyContent: 'center',
         alignItems: 'center',
         resizeMode: 'contain',
     },
     emptyRow: {
         flex: 1,
-    },
-    alignmentDot: {
-        position: 'absolute',
-        width: 10, // Size of the dot
-        height: 10, // Size of the dot
-        borderRadius: 5, // Half the size of the dot to make it round
-        backgroundColor: 'blue', // Make it a color that stands out
     },
 });
