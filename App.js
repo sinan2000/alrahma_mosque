@@ -17,66 +17,14 @@ import HijriScreen from './screens/HijriScreen';
 import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getHijriDate, getMonthlyCalendar } from './utils';
 import * as Location from 'expo-location';
+import { useTranslation } from 'react-i18next'; 
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-function PrayerStackScreen() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen 
-        name="PrayerTimes" 
-        component={PrayerTimesScreen} 
-        options={{ 
-          headerShown: true, 
-          title: 'Prayer Times'
-        }} 
-      />
-      <Stack.Screen 
-        name="PrayerTracker" 
-        component={PrayerTrackerScreen} 
-        options={{ 
-          headerShown: true, 
-          title: 'Prayer Tracker',
-        }}
-      />
-    </Stack.Navigator>
-  );
-}
-
-function MoreStackScreen() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="More"
-        component={MoreScreen}
-        options={{
-          headerShown: true,
-          title: 'More',
-        }}
-      />
-      <Stack.Screen
-        name="Names"
-        component={NamesScreen}
-        options={{
-          headerShown: true,
-          title: '99 Names of Allah SWT',
-        }}
-      />
-      <Stack.Screen
-        name="Dua"
-        component={DuaScreen}
-        option={{
-          headerShown: true,
-          title: 'Dua and Dhikr'
-        }}
-      />
-    </Stack.Navigator>
-  );
-}
-
 export default function App() {
   const [isSplashScreenVisible, setSplashScreenVisibility] = useState(true);
+  const { t } = useTranslation();
 
   let [fontsLoaded] = useFonts({
     OpenSans_400Regular,
@@ -84,6 +32,68 @@ export default function App() {
     OpenSans_500Medium,
     OpenSans_700Bold,
   });
+
+  function PrayerStackScreen() {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen 
+          name="PrayerTimes" 
+          component={PrayerTimesScreen} 
+          options={{ 
+            headerShown: true, 
+            title: t('times')
+          }} 
+        />
+        <Stack.Screen 
+          name="PrayerTracker" 
+          component={PrayerTrackerScreen} 
+          options={{ 
+            headerShown: true, 
+            title: t('tracker'),
+          }}
+        />
+      </Stack.Navigator>
+    );
+  }
+  
+  function MoreStackScreen() {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen
+          name="More"
+          component={MoreScreen}
+          options={{
+            headerShown: true,
+            title: t('more'),
+          }}
+        />
+        <Stack.Screen
+          name="Names"
+          component={NamesScreen}
+          options={{
+            headerShown: true,
+            title: t('names'),
+          }}
+        />
+        <Stack.Screen
+          name="Dua"
+          component={DuaScreen}
+          option={{
+            headerShown: true,
+            title: t('duas'),
+          }}
+        />
+        <Stack.Screen 
+          name="PrayerTracker" 
+          component={PrayerTrackerScreen} 
+          options={{ 
+            headerShown: true, 
+            title: t('tracker'),
+          }}
+        />
+      </Stack.Navigator>
+    );
+  }
 
   useEffect(() => {
     // Splash Screen
@@ -210,7 +220,7 @@ export default function App() {
           component={PrayerStackScreen} 
           options={{
             headerShown: false,
-            tabBarLabel: 'Prayer Times',
+            tabBarLabel: t('times'),
             tabBarActiveTintColor: '#0e9d87',
             tabBarIcon: ({ focused, color, size }) => (
               <Image 
@@ -230,8 +240,8 @@ export default function App() {
           component={QiblaScreen} 
           options={{
             headerShown: true,
-            title: 'Qibla Direction',
-            tabBarLabel: 'Qibla',
+            title: t('qibla'),
+            tabBarLabel: t('qibla'),
             tabBarActiveTintColor: '#0e9d87',
             tabBarIcon: ({ focused, color, size }) => (
               <Image 
@@ -251,8 +261,8 @@ export default function App() {
           component={HijriScreen}
           options={{
             headerShown: true,
-            title: 'Hijri Calendar',
-            tabBarLabel: 'Calendar',
+            title: t('hijri'),
+            tabBarLabel: t('calendar'),
             tabBarActiveTintColor: '#0e9d87',
             tabBarIcon: ({ focused, color, size }) => (
               <Image 
@@ -272,7 +282,7 @@ export default function App() {
           component={MoreStackScreen} 
           options={{
             headerShown: false,
-            tabBarLabel: 'More',
+            tabBarLabel: t('more'),
             tabBarActiveTintColor: '#0e9d87',
             tabBarIcon: ({ focused, color, size }) => (
               <Image 

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View,  Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, View,  Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getHijriDate, getMonthlyCalendar, getEachDateIndex } from '../utils';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
+
+const window = Dimensions.get('window');
+const heightScale = window.height/ 100;
+const widthScale = window.width / 100;
  
 const islamicMonths = ["Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani", "Jumada al-awwal", "Jumada al-thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"];
 const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -215,7 +219,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 15,
+        padding: widthScale * 3.5,
         backgroundColor: '#eaeaea',
     },
     monthText: {
@@ -225,10 +229,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     navButton: {
-        padding: 10,
+        padding: widthScale * 2.3,
     },
     calendarGrid: {
-        padding: 15,
+        padding: widthScale * 3.5,
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -247,13 +251,13 @@ const styles = StyleSheet.create({
         borderColor: '#cccccc',
         justifyContent: 'center',
         alignItems: 'center',
-        margin: 2,
+        margin: widthScale * 0.4,
     },
     dayHeader: {
         width: 50,
         textAlign: 'center',
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginBottom: heightScale,
     },
     textInCell: {
         textAlign: 'center',
@@ -265,43 +269,42 @@ const styles = StyleSheet.create({
     },
     selectedDateText: {
         color: 'black',
-        fontSize: 16,
+        fontSize: widthScale * 3.7,
     },
     selectedDateTextContainer: {
         borderWidth: 1,
         borderColor: '#cccccc',
         borderRadius: 10,
-        padding: 10,
+        padding: widthScale * 2.3,
     },
     holidaysContainer: {
-        marginTop: 0,
-        padding: 10,
+        padding: widthScale * 2.3,
         width: '100%',
     },
     holidaysHeader: {
-        fontSize: 18,
+        fontSize: widthScale * 4.2,
         fontWeight: 'bold',
         color: '#333',
-        marginBottom: 10,
+        marginBottom: heightScale,
         textAlign: 'center',
     },
     holidayName: {
-        fontSize: 18,
+        fontSize: widthScale * 4.2,
         fontWeight: 'bold',
         color: 'black',
     },
     holidayDate: {
-        fontSize: 14,
+        fontSize: widthScale * 3.2,
         color: 'gray',
-        marginTop: 5,
+        marginTop: heightScale * 0.5,
     },
     holidayItem: {
-        padding: 10,
+        padding: widthScale * 2.3,
         borderRadius: 10,
         borderWidth: 1,
         borderColor: '#cccccc',
-        marginBottom: 10,
+        marginBottom: heightScale,
         alignItems: 'flex-start',
-        marginHorizontal: 10,
+        marginHorizontal: widthScale * 2.3,
     },
 });
