@@ -138,7 +138,7 @@ export default function HijriScreen() {
             month: 'long',
             day: 'numeric'
         };
-        const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
+        const locale = `${i18n.language}-${i18n.language === 'nl' ? 'NL' : 'GB'}`;
         const formattedDate = display.toLocaleDateString(locale, options);
         return (
             <View style={styles.selectedDateContainer}>
@@ -168,7 +168,7 @@ export default function HijriScreen() {
                         month: 'long',
                         day: 'numeric'
                     };
-                    const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
+                    const locale = `${i18n.language}-${i18n.language === 'nl' ? 'NL' : 'GB'}`;
                     const formattedDate = display.toLocaleDateString(locale, options);
                     return (
                     <View key={`holiday-${index}`} style={styles.holidayItem}>

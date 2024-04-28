@@ -251,7 +251,7 @@ export default function PrayerTimesScreen( { navigation }) {
 
       const formatDate = (date) => {
         const options = { day: 'numeric', month: 'long'};
-        const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
+        const locale = `${i18n.language}-${i18n.language === 'nl' ? 'NL' : 'GB'}`;
         return date.toLocaleDateString(locale, options);
       }
       

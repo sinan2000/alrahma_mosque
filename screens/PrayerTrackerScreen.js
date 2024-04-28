@@ -115,7 +115,7 @@ export default function PrayerTrackerScreen({ route }) {
     };
 
     const getMonthName = (date) => {
-        const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
+        const locale = `${i18n.language}-${i18n.language === 'nl' ? 'NL' : 'GB'}`;
         const options = { month: 'long' };
         return date.toLocaleDateString(locale, options);
       };
