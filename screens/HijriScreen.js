@@ -3,6 +3,8 @@ import { ScrollView, View,  Text, StyleSheet, TouchableOpacity } from 'react-nat
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getHijriDate, getMonthlyCalendar, getEachDateIndex } from '../utils';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
  
 const islamicMonths = ["Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani", "Jumada al-awwal", "Jumada al-thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"];
 const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -11,6 +13,7 @@ export default function HijriScreen() {
     const [hijriDate, setHijriDate] = useState({ day: null, month: null, year: null});
     const [hijriCalendar, setHijriCalendar] = useState({});
     const [focusedDate, setFocusedDate] = useState('');
+    const { t } = useTranslation();
 
     useEffect(() => {
         const fetchHijriData = async () => {
@@ -131,7 +134,7 @@ export default function HijriScreen() {
             month: 'long',
             day: 'numeric'
         };
-        const locale = 'en-GB';
+        const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
         const formattedDate = display.toLocaleDateString(locale, options);
         return (
             <View style={styles.selectedDateContainer}>
@@ -149,7 +152,7 @@ export default function HijriScreen() {
 
         return (
             <View style={styles.holidaysContainer}>
-                <Text style={styles.holidaysHeader}>Holidays</Text>
+                <Text style={styles.holidaysHeader}>{t('holidays')}</Text>
                 {data.holidays.map((holiday, index) => {
                     const dateIndex = holiday.date;
                     const gregorianDate = data.calendar[dateIndex - 1];
@@ -161,7 +164,7 @@ export default function HijriScreen() {
                         month: 'long',
                         day: 'numeric'
                     };
-                    const locale = 'en-GB';
+                    const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
                     const formattedDate = display.toLocaleDateString(locale, options);
                     return (
                     <View key={`holiday-${index}`} style={styles.holidayItem}>

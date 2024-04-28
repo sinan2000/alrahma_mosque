@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
+import i18n from '../i18n';
 
 const MenuItem = ({ title, description, iconName, onPress, languageOptions }) => {
   const [expanded, setExpanded] = useState(false);
@@ -13,10 +14,16 @@ const MenuItem = ({ title, description, iconName, onPress, languageOptions }) =>
     }
   };
 
+  const changeLanguage= (index) => {
+    const newLanguage = index === 0 ? 'en' : 'nl';
+    i18n.changeLanguage(newLanguage);
+    setExpanded(false);
+  }
+
   const renderLanguageOptions = () => {
     return languageOptions.map((language, index) => (
       <View key={index} style={styles.languageOption}>
-        <TouchableOpacity style={[styles.languageTouchable, index === languageOptions.length - 1 && {borderBottomLeftRadius: 15, borderBottomRightRadius: 15}]} onPress={() => console.log("pressed")}>
+        <TouchableOpacity style={[styles.languageTouchable, index === languageOptions.length - 1 && {borderBottomLeftRadius: 15, borderBottomRightRadius: 15}]} onPress={() => changeLanguage(index)}>
           <Text style={styles.languageText}>{language}</Text>
         </TouchableOpacity>
         {index < languageOptions.length - 1 && <View style={styles.divider}></View>}

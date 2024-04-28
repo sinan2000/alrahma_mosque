@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import * as Location from 'expo-location';
 import { Magnetometer } from 'expo-sensors';
+import { useTranslation } from 'react-i18next';
 
 const KABA_LATITUDE = 21.422487;
 const KAABA_LONGITUDE = 39.826206;
@@ -12,6 +13,7 @@ export default function QiblaScreen() {
     const [magnetometer, setMagnetometer] = useState(0);
     const [direction, setDirection] = useState(null);
     const [compassLayout, setCompassLayout] = useState({width: 0, height: 0});
+    const { t } = useTranslation();
 
     useEffect(() => {
         _toggle();
@@ -57,11 +59,11 @@ export default function QiblaScreen() {
     };
 
     const calculatePointerPosition = (angleDegrees, radius, pointerSize) => {
-        const angleRadians = degreesToRadians(angleDegrees) - Math.PI / 2; // Adjusting angle to point upwards
-        // Subtract half the size of the pointer to ensure the tip of the pointer image (assuming it's the center of the image) aligns with the edge of the compass.
+        const angleRadians = degreesToRadians(angleDegrees) - Math.PI / 2;
+
         const adjustedRadius = radius - pointerSize / 2; 
-        const left = adjustedRadius * Math.cos(angleRadians) + radius; // Offset to the edge of the compass
-        const top = adjustedRadius * Math.sin(angleRadians) + radius; // Offset to the edge of the compass
+        const left = adjustedRadius * Math.cos(angleRadians) + radius; 
+        const top = adjustedRadius * Math.sin(angleRadians) + radius; 
         return { 
             left: left - styles.compassPointer.width / 2, 
             top: top - styles.compassPointer.height / 2, 
@@ -103,28 +105,12 @@ export default function QiblaScreen() {
         return Math.round(angle);
     };
 
-    const _direction = (degree) => {
-        if (degree >= 22.5 && degree < 67.5) {
-            return 'NE';
-        } else if (degree >= 67.5 && degree < 112.5) {
-            return 'E';
-        } else if (degree >= 112.5 && degree < 157.5) {
-            return 'SE';
-        }
-        else if (degree >= 157.5 && degree < 202.5) {
-            return 'S';
-        }
-        else if (degree >= 202.5 && degree < 247.5) {
-            return 'SW';
-        }
-        else if (degree >= 247.5 && degree < 292.5) {
-            return 'W';
-        }
-        else if (degree >= 292.5 && degree < 337.5) {
-            return 'NW';
-        }
-        else {
-            return 'N';
+    const _direction = () => {
+        if (!direction) {
+            return t('calc');
+        } else {
+            const response = `${t('isat')}${Math.round(direction)}°`;
+            return response;
         }
     };
 
@@ -136,7 +122,7 @@ export default function QiblaScreen() {
         <View style={styles.container}>
             <View style={styles.directionRow}>
                 <Text style={styles.directionText}>
-                    {_direction(_degree(magnetometer))}
+                    {_direction()}
                 </Text>
             </View>
             <View style={styles.compassRow} onLayout={(event) => {
@@ -160,14 +146,17 @@ export default function QiblaScreen() {
                     
                     }}>
                         <Image 
-                        source={require('../assets/compass_pointer.png')} 
+                        source={require('../assets/qibla.png')} 
                         style={[
                             styles.compassPointer,
                             {
                                 ...calculatePointerPosition(360 - direction - magnetometer, compassLayout.width / 2, Math.max(styles.compassPointer.width, styles.compassPointer.height)),
-                            }
+                            },
+                            {transform: [{ rotate: `${360 - magnetometer - direction}deg` }]}
                         ]} 
                         />
+                        <View style={[styles.alignmentDot, calculatePointerPosition(360 - direction - magnetometer, compassLayout.width / 2, Math.max(styles.compassPointer.width, styles.compassPointer.height))]} />
+                        
                     </View>
                 )}
                 <Text style={styles.degreeText}>
@@ -179,13 +168,13 @@ export default function QiblaScreen() {
     );
 };
 
-const pointerImageWidth = height / 26;
+const pointerImageWidth = 40;
 const pointerImageHeight = height / 26;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'black',
+        backgroundColor: 'red',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -226,5 +215,12 @@ const styles = StyleSheet.create({
     },
     emptyRow: {
         flex: 1,
+    },
+    alignmentDot: {
+        position: 'absolute',
+        width: 10, // Size of the dot
+        height: 10, // Size of the dot
+        borderRadius: 5, // Half the size of the dot to make it round
+        backgroundColor: 'blue', // Make it a color that stands out
     },
 });

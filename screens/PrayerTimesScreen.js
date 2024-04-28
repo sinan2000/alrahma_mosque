@@ -9,6 +9,8 @@ import sunIcon from '../assets/sun.png';
 import moonIcon from '../assets/moon.png';
 import { PrayerContext } from '../PrayerContext';
 import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, isOffsetDate, getDayOfYear} from '../utils';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
 const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
@@ -24,6 +26,7 @@ export default function PrayerTimesScreen( { navigation }) {
   const [checkButtonWidth, setCheckButtonWidth] = useState(0);
   const {checkedPrayer, loading, togglePrayer, checkPrayedForDate} = useContext(PrayerContext);
   const countdownRef = useRef(null);
+  const { t } = useTranslation();
 
   const getNextPrayer = () => {
     // Gets the next prayer from the current time
@@ -247,8 +250,9 @@ export default function PrayerTimesScreen( { navigation }) {
       setHijriDate(`${hijriInfo.day} ${hijriInfo.month.en} ${hijriInfo.year} ${hijriInfo.designation.abbreviated}`);
 
       const formatDate = (date) => {
-        const options = { month: 'long', day: 'numeric'};
-        return date.toLocaleDateString(undefined, options);
+        const options = { day: 'numeric', month: 'long'};
+        const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
+        return date.toLocaleDateString(locale, options);
       }
       
       setGregorianDate(formatDate(currentDate));
@@ -326,7 +330,7 @@ export default function PrayerTimesScreen( { navigation }) {
         </View>
         
         <View style={styles.bottomRow}>
-          <Text style={styles.nextPrayer}>Next prayer in {timeToNextPrayer}</Text>
+          <Text style={styles.nextPrayer}>{t('next')} {timeToNextPrayer}</Text>
         </View>
 
         {!loading && 

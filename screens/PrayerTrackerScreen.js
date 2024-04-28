@@ -5,8 +5,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import { getDayOfYear } from '../utils';
 import { PrayerContext } from '../PrayerContext';
 import TrackerRow from '../components/TrackerRow';
-
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 const screenWidth = Dimensions.get('window').width;
 const margin = screenWidth * 0.1;
@@ -23,6 +23,7 @@ export default function PrayerTrackerScreen({ route }) {
     const [startIndex, setStartIndex] = useState(0);
     const [endIndex, setEndIndex] = useState(0);
     const { nextPrayer } = route.params;
+    const { t } = useTranslation();
 
     useEffect(() => {
         const updates = () => {
@@ -113,6 +114,12 @@ export default function PrayerTrackerScreen({ route }) {
         togglePrayer(year, dayOfYear, prayerIndex);
     };
 
+    const getMonthName = (date) => {
+        const locale = i18n.language === 'en' ? 'en-GB' : 'nl-NL';
+        const options = { month: 'long' };
+        return date.toLocaleDateString(locale, options);
+      };
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -120,14 +127,14 @@ export default function PrayerTrackerScreen({ route }) {
                     <FontAwesome name="angle-left" size={40} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.monthYearText}>
-                    {currentDate && `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+                    {currentDate && `${getMonthName(currentDate)} ${currentDate.getFullYear()}`}
                 </Text>
                 <TouchableOpacity onPress={() => swipeMonth(1)}>
                     <FontAwesome name="angle-right" size={40} color="black" />
                 </TouchableOpacity>
             </View>
             <Text style={{textAlign: 'center', marginBottom: height_scale * 2, fontWeight: 'bold',}}>
-                Prayer Completion Rate
+                {t('completion')}
             </Text>
             <Svg height="40" width="100%">
                 <Rect

@@ -3,96 +3,12 @@ import { ScrollView, View, Text, StyleSheet, Dimensions } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import SegmentedControlTabs from 'react-native-segmented-control-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { i18n } from '../i18n';
 
 const window = Dimensions.get('window');
 const height_scale = window.height / 100;
 const width_scale = window.width / 100;
-
-const duaData = [
-    {
-        arabic: "اللَّهُمَّ أَذْهِبْ غَيْظَ قَلْبِي",
-        english: "Oh Allah, remove anger from my heart.",
-        pronunciation: "Allahumma azhib Gaydha Qalbee.",
-    },
-    {
-        arabic: "اللهم إن كان هذا الأمر خيرا لي فَاقْدُرْهُ لِي وَيَسِّرْهُ لِي ثُمَّ بَارِكْ لِي فِيهِ",
-        english: "Oh Allah, if my intended action is best for me, make it destined and easy for me, and grant me Your Blessings in it.",
-        pronunciation: "Allahumma in kaana haatha alAmr khayran lee fa iQ-dirhu lee wa yassirhu lee summa baarik lee feehi.",
-    },
-    {
-        arabic: "اللهم طهر قلبي من كل سوء ، اللهم طهر قلبي من كل ما يبغضك، اللهم طهر قلبي من كل غلٍ وحقدٍ وحسد وكبر",
-        english: "Oh Allah, clean away all forms of evil from my heart. Oh Allah, clean my heart and remove everything that displeases you. Oh Allah, clean my heart of every form of bitterness, hard feelings, and jealousy.",
-        pronunciation: "Allahumma Tahhir Qalbee min kulli suu, Allahumma Tahhir Qalbee min kulli maa yubaGGiDuk. Allahumma Tahhir Qalbee min kulli Gillin wa HiQdin wa Hasadin wa kibr.",
-    },
-    {
-        arabic: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ الْهَمِّ وَالْحُزْنِ وَالْعَجْزِ وَالْكَسَلِ وَالْبُخْلِ وَالْجُبْنِ وَضَلَعِ الدَّيْنِ وَغَلَبَةِ الرِّجَالِ",
-        english: "O Allah, I take refuge in you from anxiety and sorrow, weakness and laziness, miserliness and cowardice, the burden of debts and from being overpowered by men.",
-        pronunciation: "Allahumma innee a3uzubika min alham wa alhuzn wa al3ajz wa alkusl wa albukhl wa aljubn wa galbah aldayn wa Galbah alrijaal.",
-    },
-    {
-        arabic: "اللهمّ فارج الهم، كاشف الغم، مذهب الحزن، اكشف اللهمّ عنّي همّي وغمّي ، وأذهب عنّي حزني",
-        english: "Oh Allah, Reliever of anxiety, Remover of distress, Dispeller of grief! Remove my anxiety, distress, and dispel from me my sadness.",
-        pronunciation: "Allahumma Faarij alhamm, kaashif alGamm, muzhib alhuzn, ikshif Allahumma 3annee hammee wa Gammee, wa azhib 3annee huznee.",
-    },
-    {
-        arabic: "اللهمّ اجعل في قلبي نوراً، وفي لساني نوراً، واجعل في سمعي نوراً، واجعل في بصري نوراً، واجعل من خلفي نوراً، ومن أمامي نوراً، واجعل من فوقي نوراً، ومن تحتي نوراً، اللهمّ أعطني نوراً",
-        english: "Oh Allah! Place in my heart, light. Place in my tongue, light. Place in my hearing, light. Place in my sight, light. Place behind me, light. Place before me, light. Place above me, light. Place under me, light. Oh Allah grant me light!",
-        pronunciation: "Allahumma Ij3al fee qalbee noora, wa fee lisaanee noora, wa ij3al fee sam3ee noora, wa ij3al fee baSaree noora, wa ij3al min khalfee noora, wa min amaamee noora, wa ij3al min fawqee nooraa, wa mmin tahtee noora, Allahumma a3Tinee noora.",
-    },
-    {
-        arabic: "اللهم إني أعوذ بك من شر سمعي، ومن شر بصري، ومن شر لساني، ومن شر قلبي، ومن شر منيي",
-        english: "Oh Allah, I seek protection in you from the evil of my hearing, from the evil of my sight, from the evil of my tongue, from the evil of my heart, and from the evil of myself.",
-        pronunciation: "Allahumma innee a3uzubika min sharri sam3ee, wa min sharri baSaree, wa min sharri lisaanee, wa min sharri qalbee, wa min sharri minnee.",
-    },
-    {
-        arabic: "اللهم اخرجني من الظلمات إلى النور",
-        english: "Oh Allah take me out of darkness and into the light.",
-        pronunciation: "Allahumma Akhrijnee min aldulumaat ilaa alnur.",
-    },
-    {
-        arabic: "اللهم إليك أشكو ضعف قوتي وقلة حيلتي وهواني على الناس يا أرحم الراحمين أنت ربُّ المستضعفين وانت ربّي",
-        english: "To You, my Lord, I complain of my weakness, lack of support and the humiliation I am made to receive. Most Compassionate and Merciful! You are the Lord of the weak, and you are my Lord.",
-        pronunciation: "Allahuma ilayka ashku da'fa quwwati wa qillata heelatee wa hawanee 3ala an-naas ya arhamur rahimeen annta Rabbul mustad'afeen wa anta rabbi.",
-    },
-    {
-        arabic: "اللهم امنحني القوة لأقاوم نفسي، والشجاعة لأواجه ضعفي، واليقين لأتقبل قدري، والرضا ليرتاح عقلي، والفهم ليطمئن قلبي",
-        english: "Oh Allah! Grant me the strength to oppose myself, the courage to face my weakness, the conviction to accept my faith, the satisfaction of to relax my mind, and the understanding to reassure my heart.",
-        pronunciation: "Allahumma imnaHnee alQuwwah li aQwaami nafseee, wa ash-Shujaa3ah li uwaajih da3fee, wa alYaqeeni li ataQabbal qadree, wa ar-riDaa li yartaah 3aQalee, wa alfahm li yaTmainna Qalbee.",
-    }
-];
-
-const dhikrData = [
-    {
-        arabic: "سُبْحَانَ اللّهِ",
-        english: "Glory be to Allah.",
-        pronunciation: "Subhanallah",
-        title: "Tasbih",
-    },
-    {
-        arabic: "الْحَمْدُ لِلّهِ",
-        english: "All praise is due to Allah.",
-        pronunciation: "Alhamdulillah",
-        title: "Tahmid",
-    },
-    {
-        arabic: "اللّهُ أَكْبَرُ",
-        english: "Allah is the Greatest.",
-        pronunciation: "Allahu Akbar",
-        title: "Takbir",
-    },
-    {
-        arabic: "لا إِلٰهَ إِلَّا اللهُ",
-        english: "There is no deity but Allah.",
-        pronunciation: "La ilaha illallah",
-        title: "Tahlil",
-    },
-    {
-        arabic: "أَسْتَغْفِرُ اللهَ",
-        english: "I seek forgiveness from Allah.",
-        pronunciation: "Astaghfirullah",
-        title: "Istighfar",
-    }
-];
 
 const Item = ( {arabic, english, pronunciation, title, isDhikr, onIncrement, onReset, count } ) => {
     return (
@@ -120,6 +36,79 @@ const Item = ( {arabic, english, pronunciation, title, isDhikr, onIncrement, onR
 
 export default function DuaScreen() {
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const { t } = useTranslation();
+
+    const duaData = [
+        { arabic: "اللَّهُمَّ أَذْهِبْ غَيْظَ قَلْبِي",
+        english: t('dua1'),
+        pronunciation: "Allahumma azhib Gaydha Qalbee.",
+        },
+        { arabic: "اللهم إن كان هذا الأمر خيرا لي فَاقْدُرْهُ لِي وَيَسِّرْهُ لِي ثُمَّ بَارِكْ لِي فِيهِ",
+        english: t('dua2'),
+        pronunciation: "Allahumma in kaana haatha alAmr khayran lee fa iQ-dirhu lee wa yassirhu lee summa baarik lee feehi.",
+        },
+        { arabic: "اللهم طهر قلبي من كل سوء ، اللهم طهر قلبي من كل ما يبغضك، اللهم طهر قلبي من كل غلٍ وحقدٍ وحسد وكبر",
+        english: t('dua3'),
+        pronunciation: "Allahumma Tahhir Qalbee min kulli suu, Allahumma Tahhir Qalbee min kulli maa yubaGGiDuk. Allahumma Tahhir Qalbee min kulli Gillin wa HiQdin wa Hasadin wa kibr.",
+        },
+        { arabic: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ الْهَمِّ وَالْحُزْنِ وَالْعَجْزِ وَالْكَسَلِ وَالْبُخْلِ وَالْجُبْنِ وَضَلَعِ الدَّيْنِ وَغَلَبَةِ الرِّجَالِ",
+        english: t('dua4'),
+        pronunciation: "Allahumma innee a3uzubika min alham wa alhuzn wa al3ajz wa alkusl wa albukhl wa aljubn wa galbah aldayn wa Galbah alrijaal.",
+        },
+        { arabic: "اللهمّ فارج الهم، كاشف الغم، مذهب الحزن، اكشف اللهمّ عنّي همّي وغمّي ، وأذهب عنّي حزني",
+        english: t('dua5'),
+        pronunciation: "Allahumma Faarij alhamm, kaashif alGamm, muzhib alhuzn, ikshif Allahumma 3annee hammee wa Gammee, wa azhib 3annee huznee.",
+        },
+        { arabic: "اللهمّ اجعل في قلبي نوراً، وفي لساني نوراً، واجعل في سمعي نوراً، واجعل في بصري نوراً، واجعل من خلفي نوراً، ومن أمامي نوراً، واجعل من فوقي نوراً، ومن تحتي نوراً، اللهمّ أعطني نوراً",
+        english: t('dua6'),
+        pronunciation: "Allahumma Ij3al fee qalbee noora, wa fee lisaanee noora, wa ij3al fee sam3ee noora, wa ij3al fee baSaree noora, wa ij3al min khalfee noora, wa min amaamee noora, wa ij3al min fawqee nooraa, wa mmin tahtee noora, Allahumma a3Tinee noora.",
+        },
+        { arabic: "اللهم إني أعوذ بك من شر سمعي، ومن شر بصري، ومن شر لساني، ومن شر قلبي، ومن شر منيي",
+        english: t('dua7'),
+        pronunciation: "Allahumma innee a3uzubika min sharri sam3ee, wa min sharri baSaree, wa min sharri lisaanee, wa min sharri qalbee, wa min sharri minnee.",
+        },
+        { arabic: "اللهم اخرجني من الظلمات إلى النور",
+        english: t('dua8'),
+        pronunciation: "Allahumma Akhrijnee min aldulumaat ilaa alnur.",
+        },
+        { arabic: "اللهم إليك أشكو ضعف قوتي وقلة حيلتي وهواني على الناس يا أرحم الراحمين أنت ربُّ المستضعفين وانت ربّي",
+        english: t('dua9'),
+        pronunciation: "Allahuma ilayka ashku da'fa quwwati wa qillata heelatee wa hawanee 3ala an-naas ya arhamur rahimeen annta Rabbul mustad'afeen wa anta rabbi.",
+        },
+        { arabic: "اللهم امنحني القوة لأقاوم نفسي، والشجاعة لأواجه ضعفي، واليقين لأتقبل قدري، والرضا ليرتاح عقلي، والفهم ليطمئن قلبي",
+        english: t('dua10'),
+        pronunciation: "Allahumma imnaHnee alQuwwah li aQwaami nafseee, wa ash-Shujaa3ah li uwaajih da3fee, wa alYaqeeni li ataQabbal qadree, wa ar-riDaa li yartaah 3aQalee, wa alfahm li yaTmainna Qalbee.",
+        },
+    ];
+
+    const dhikrData = [
+        { arabic: "سُبْحَانَ اللّهِ",
+        english: t('dhikr1'),
+        pronunciation: "Subhanallah",
+        title: "Tasbih",
+        },
+        { arabic: "الْحَمْدُ لِلّهِ",
+        english: t('dhikr2'),
+        pronunciation: "Alhamdulillah",
+        title: "Tahmid",
+        },
+        { arabic: "اللّهُ أَكْبَرُ",
+        english: t('dhikr3'),
+        pronunciation: "Allahu Akbar",
+        title: "Takbir",
+        },
+        { arabic: "لا إِلٰهَ إِلَّا اللهُ",
+        english: t('dhikr4'),
+        pronunciation: "La ilaha illallah",
+        title: "Tahlil",
+        },
+        { arabic: "أَسْتَغْفِرُ اللهَ",
+        english: t('dhikr5'),
+        pronunciation: "Astaghfirullah",
+        title: "Istighfar",
+        },
+    ];
+
     const renderItems = selectedIndex === 0 ? duaData : dhikrData;
     const [counters, setCounters] = useState(new Array(dhikrData.length).fill(0));
 

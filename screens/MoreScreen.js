@@ -2,8 +2,11 @@ import React from 'react';
 import {ScrollView} from 'react-native';
 import MenuItem from '../components/MenuItem';
 import * as Linking from 'expo-linking';
+import { useTranslation } from 'react-i18next';
 
 export default function MoreScreen({ navigation }) {
+    const { t } = useTranslation();
+
     return (
       <ScrollView 
         style={{
@@ -12,27 +15,27 @@ export default function MoreScreen({ navigation }) {
         }}
       >
         <MenuItem 
-          title='99 Names of Allah SWT'
-          description='Learn the beautiful names of Allah SWT'
+          title={t('names')}
+          description={t('names2')}
           iconName={require('../assets/names.png')}
           onPress={() => navigation.navigate('Names')}
         />
         <MenuItem 
-          title='Dua and Dhikr'
-          description='Learn the supplications and remembrances'
+          title={t('duas')}
+          description={t('duas2')}
           iconName={require('../assets/dua.png')}
           onPress={() => navigation.navigate('Dua')}
         />
         <MenuItem 
-          title='Donations'
-          description='Donate to the Islamic Center Al-Rahma Groningen Foundation'
+          title={t('donations')}
+          description={t('donations2')}
           iconName={require('../assets/sadaqah.png')}
           onPress={() => Linking.openURL('https://alrahma.nl/steun-ons/')}
         />
         <MenuItem 
-          title='Change Language'
+          title={t('language')}
           iconName={require('../assets/language.png')}
-          languageOptions={['English', 'Dutch']}
+          languageOptions={[t('english'), t('dutch')]}
         />
       </ScrollView>
     );
