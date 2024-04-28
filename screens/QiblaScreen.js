@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import * as Location from 'expo-location';
 import { Magnetometer } from 'expo-sensors';
 import { useTranslation } from 'react-i18next';
+import Svg, { Line } from 'react-native-svg';
 
 const KABA_LATITUDE = 21.422487;
 const KAABA_LONGITUDE = 39.826206;
@@ -52,6 +53,41 @@ export default function QiblaScreen() {
         return brng;
     };
 
+    const calculatePointerPosition = () => {
+        const radius = (width - 80) / 2;
+        const radians = degreesToRadians(360 - magnetometer + direction);
+        const offsetX = radius * Math.cos(radians);
+        const offsetY = radius * Math.sin(radians);
+        const adjustedX = radius + offsetX - (pointerImageWidth / 2);
+        const adjustedY = radius + offsetY - (pointerImageHeight / 2);
+        return {
+            left: adjustedX,
+            top: adjustedY ,
+        }
+    };
+
+    const drawQiblaLine = () => {
+        const compassCenterX = (width - 80) / 2;
+        const compassCenterY = compassLayout.height / 2; // Assuming height is the diameter of the compass view
+        const compassRadius = compassLayout.width / 2; // Assuming width is the diameter of the compass view
+        const angle = 360 - magnetometer + direction;
+        // Calculate the angle in radians from the center of the compass to the Qibla direction
+        const qiblaAngleRadians = degreesToRadians(angle);
+    
+        // Calculate the end point of the line
+        const lineEndPointX = compassCenterX + compassRadius * Math.cos(qiblaAngleRadians);
+        const lineEndPointY = compassCenterY + compassRadius * Math.sin(qiblaAngleRadians);
+    
+        // Return the line start and end points
+        return {
+            x1: compassCenterX,
+            y1: compassCenterY,
+            x2: lineEndPointX,
+            y2: lineEndPointY,
+            rotation: angle,
+        };
+    };
+
     const degreesToRadians = (degrees) => {
         return degrees * Math.PI / 180;
     };
@@ -59,19 +95,6 @@ export default function QiblaScreen() {
     const radiansToDegrees = (radians) => {
         return radians * 180 / Math.PI;
     };
-
-    const calculatePointerPosition = (angleDegrees, radius, pointerSize) => {
-        const angleRadians = degreesToRadians(angleDegrees) - Math.PI / 2;
-
-        const adjustedRadius = radius - pointerSize / 2; 
-        const left = adjustedRadius * Math.cos(angleRadians) + radius; 
-        const top = adjustedRadius * Math.sin(angleRadians) + radius; 
-        return { 
-            left: left - styles.compassPointer.width / 2, 
-            top: top - styles.compassPointer.height / 2, 
-        };
-      };
-      
 
     const _toggle = () => {
         if (subscription) {
@@ -120,22 +143,6 @@ export default function QiblaScreen() {
         return magnetometer - 90 >= 0 ? magnetometer - 90 : magnetometer + 271;
     };
 
-    const POZ = () => {
-        //console.log(compassLayout.width);
-        const radius = (width - 80) / 2;
-        const radians = degreesToRadians(360 - magnetometer + direction);
-        const offsetX = radius * Math.cos(radians);
-        const offsetY = radius * Math.sin(radians);
-        const adjustedX = radius + offsetX - (pointerImageWidth / 2);
-        const adjustedY = radius + offsetY - (pointerImageHeight / 2);
-        //console.log(radius, radians, offsetX, offsetY, adjustedX, adjustedY);
-        //console.log(center, radius, offsetX, offsetY, adjustedX, adjustedY);
-        return {
-            left: adjustedX,
-            top: adjustedY ,
-        }
-    };
-
     return (
         <View style={styles.container}>
             <View style={styles.directionRow}>
@@ -155,7 +162,7 @@ export default function QiblaScreen() {
                     source={require("../assets/compass_bg.png")} 
                     style={[styles.compassBackground, {transform: [{ rotate: `${360 - magnetometer}deg` }]}]} />
                 
-                {direction && (
+                {direction && (<>
                     <View style={{
                         position: 'absolute',
                         width: compassLayout.width,
@@ -165,16 +172,28 @@ export default function QiblaScreen() {
                     
                     }}>
                         <Image 
-                        source={require('../assets/qibla.png')} 
+                        source={require('../assets/pointer.png')} 
                         style={[
                             styles.compassPointer,
-                            POZ(),
+                            calculatePointerPosition(),
                             {transform: [{ rotate: `${360 - magnetometer - direction}deg` }]}
                         ]} 
                         />
-                        <View style={[styles.alignmentDot, POZ()]} />
-                        
+                        <Svg height={compassLayout.height} width={compassLayout.width} style={styles.svgContainer}>
+                <Line
+                    x1={drawQiblaLine().x1}
+                    y1={drawQiblaLine().y1}
+                    x2={drawQiblaLine().x2}
+                    y2={drawQiblaLine().y2}
+                    stroke="green"
+                    strokeWidth="2"
+                    originX={`${drawQiblaLine().x1}`}
+                    originY={`${drawQiblaLine().y1}`}
+                    rotation={`${drawQiblaLine().rotation}`}
+                />
+            </Svg>
                     </View>
+                    </>
                 )}
                 <Text style={styles.degreeText}>
                     {_degree(magnetometer)}°
@@ -188,7 +207,7 @@ export default function QiblaScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'red',
+        backgroundColor: 'darkgrey',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -229,4 +248,9 @@ const styles = StyleSheet.create({
     emptyRow: {
         flex: 1,
     },
+    svgContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+      },
 });
