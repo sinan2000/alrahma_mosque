@@ -36,3 +36,7 @@ yarn-error.*
 
 # misc
 notes.txt
+
+# native code
+android/
+ios/
