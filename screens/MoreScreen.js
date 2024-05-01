@@ -15,6 +15,12 @@ export default function MoreScreen({ navigation }) {
         }}
       >
         <MenuItem 
+          title='Tracker'
+          description='Keep track of your prayers'
+          iconName={require('../assets/tracker.png')}
+          onPress={() => navigation.navigate('PrayerTracker')}
+        />
+        <MenuItem 
           title={t('names')}
           description={t('names2')}
           iconName={require('../assets/names.png')}

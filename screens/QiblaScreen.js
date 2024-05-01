@@ -5,6 +5,23 @@ import { Magnetometer } from 'expo-sensors';
 import { useTranslation } from 'react-i18next';
 import Svg, { Line } from 'react-native-svg';
 
+
+/*
+                        <Svg height={compassLayout.height} width={compassLayout.width} style={styles.svgContainer}>
+                            <Line
+                                x1={drawQiblaLine().x1}
+                                y1={drawQiblaLine().y1}
+                                x2={drawQiblaLine().x2}
+                                y2={drawQiblaLine().y2}
+                                stroke="green"
+                                strokeWidth="2"
+                                originX={`${drawQiblaLine().x1}`}
+                                originY={`${drawQiblaLine().y1}`}
+                                rotation={`${drawQiblaLine().rotation}`}
+                            />
+                        </Svg>
+*/
+
 const KABA_LATITUDE = 21.422487;
 const KAABA_LONGITUDE = 39.826206;
 const { width, height } = Dimensions.get('window');
@@ -69,21 +86,16 @@ export default function QiblaScreen() {
     const drawQiblaLine = () => {
         const compassCenterX = (width - 80) / 2;
         const compassCenterY = compassLayout.height / 2; // Assuming height is the diameter of the compass view
-        const compassRadius = compassLayout.width / 2; // Assuming width is the diameter of the compass view
-        const angle = 360 - magnetometer + direction;
-        // Calculate the angle in radians from the center of the compass to the Qibla direction
-        const qiblaAngleRadians = degreesToRadians(angle);
-    
-        // Calculate the end point of the line
-        const lineEndPointX = compassCenterX + compassRadius * Math.cos(qiblaAngleRadians);
-        const lineEndPointY = compassCenterY + compassRadius * Math.sin(qiblaAngleRadians);
+
+        const { adjustedX, adjustedY } = calculatePointerPosition();
+        const angle = 350 - magnetometer - direction;
     
         // Return the line start and end points
         return {
             x1: compassCenterX,
             y1: compassCenterY,
-            x2: lineEndPointX,
-            y2: lineEndPointY,
+            x2: adjustedX,
+            y2: adjustedY,
             rotation: angle,
         };
     };
@@ -176,22 +188,10 @@ export default function QiblaScreen() {
                         style={[
                             styles.compassPointer,
                             calculatePointerPosition(),
-                            {transform: [{ rotate: `${360 - magnetometer - direction}deg` }]}
+                            {transform: [{ rotate: `${350 - magnetometer - direction}deg` }]}
                         ]} 
                         />
-                        <Svg height={compassLayout.height} width={compassLayout.width} style={styles.svgContainer}>
-                <Line
-                    x1={drawQiblaLine().x1}
-                    y1={drawQiblaLine().y1}
-                    x2={drawQiblaLine().x2}
-                    y2={drawQiblaLine().y2}
-                    stroke="green"
-                    strokeWidth="2"
-                    originX={`${drawQiblaLine().x1}`}
-                    originY={`${drawQiblaLine().y1}`}
-                    rotation={`${drawQiblaLine().rotation}`}
-                />
-            </Svg>
+                        
                     </View>
                     </>
                 )}

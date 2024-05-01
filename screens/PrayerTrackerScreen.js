@@ -22,7 +22,7 @@ export default function PrayerTrackerScreen({ route }) {
     const [year, setYear] = useState(new Date().getFullYear());
     const [startIndex, setStartIndex] = useState(0);
     const [endIndex, setEndIndex] = useState(0);
-    const { nextPrayer } = route.params;
+    const { nextPrayer = '' } = route.params || {};
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -90,7 +90,7 @@ export default function PrayerTrackerScreen({ route }) {
     };
 
     const isValidToggle = (dayIndex, prayerIndex) => {
-        console.log(dayIndex, prayerIndex, nextPrayer);
+
         const today = new Date();
         const day = new Date(year, currentDate.getMonth(), dayIndex + 1);
         const isFutureDate = day > today;
@@ -100,7 +100,7 @@ export default function PrayerTrackerScreen({ route }) {
         console.log(day.toDateString(), today.toDateString());
         if(day.toDateString() === today.toDateString()) {
             const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-            const current_index = prayers.indexOf(nextPrayer) - 1;
+            const current_index = nextPrayer ? prayers.indexOf(nextPrayer) - 1 : 5;
             return prayerIndex <= current_index;
         }
         return true;

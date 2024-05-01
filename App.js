@@ -19,6 +19,7 @@ import { getKeysToFetch, fetchAndStorePrayerTimes, getHijriDate, getMonthlyCalen
 import * as Location from 'expo-location';
 import { useTranslation } from 'react-i18next'; 
 
+
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
