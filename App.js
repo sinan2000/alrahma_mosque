@@ -103,7 +103,7 @@ export default function App() {
     setTimeout(() => {
       setSplashScreenVisibility(false);
       SplashScreen.hideAsync();
-    }, 200); // TODO: Change to 1500
+    }, 2000);
   }, []);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import * as Location from 'expo-location';
 import { Magnetometer } from 'expo-sensors';
 import { useTranslation } from 'react-i18next';
-import Svg, { Line } from 'react-native-svg';
+//import Svg, { Line } from 'react-native-svg';
 
 
 /*
