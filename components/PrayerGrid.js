@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
 const PrayerGrid = ({ prayerTimes, navigation, nextPrayer }) => {
   const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -53,13 +54,13 @@ const height_scale = height / 100;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'rgba(255,255,255,0.5)', // Replace with the actual color code from your design
-    padding: width_scale * 3.7, // Replace with your desired padding
+    //padding: width_scale * 3.7, // Replace with your desired padding
     borderRadius: 10, // Replace with your desired border radius
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: width_scale * 2.3, // Adjust as needed
+    paddingHorizontal: wp('2.3%'), // Adjust as needed
   },
   dayColumn: {
     flex: 1, // Reduce flex number to give less space
@@ -72,29 +73,30 @@ const styles = StyleSheet.create({
     flex: 2, // Increase flex number to give more space
     justifyContent: 'center',
     alignItems: 'flex-start',
-    paddingHorizontal: width_scale * 2.3,
+    paddingHorizontal: wp('2.3%'),
   },
   dayText: {
     color: 'grey',
   },
   prayerText: {
     color: 'grey',
+    fontSize: wp('3%'),
   },
   prayerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: width_scale * 2.3, // Adjust as needed
+    paddingHorizontal: wp('2.3%'), // Adjust as needed
   },
   indicatorFilled: {
-    width: width_scale * 4.7, // Replace with your desired width
-    height: height_scale, // Replace with your desired height
+    width: wp('4.7%'), // Replace with your desired width
+    height: hp('1%'), // Replace with your desired height
     backgroundColor: '#FFFFFF', // Replace with the actual color code for filled state
     marginHorizontal: 2,
     borderRadius: 5, // Replace with your desired border radius for indicators
   },
   indicatorEmpty: {
-    width: width_scale * 4.7, // Replace with your desired width
-    height: height_scale, // Replace with your desired height
+    width: wp('4.7%'), // Replace with your desired width
+    height: hp('1%'), // Replace with your desired height
     backgroundColor: '#FFCDCD', // Replace with the actual color code for empty state
     marginHorizontal: 2,
     borderRadius: 5, // Replace with your desired border radius for indicators

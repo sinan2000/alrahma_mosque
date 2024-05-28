@@ -18,6 +18,8 @@ import { PrayerProvider } from './PrayerContext';
 import { getKeysToFetch, fetchAndStorePrayerTimes, getHijriDate, getMonthlyCalendar } from './utils';
 import * as Location from 'expo-location';
 import { useTranslation } from 'react-i18next'; 
+//import db from './firebaseConfig';
+//import { collection, getDocs } from 'firebase/firestore';
 
 
 const Tab = createBottomTabNavigator();
@@ -139,14 +141,20 @@ export default function App() {
       if (storedCity && storedCountry) {
         return;
       }
-      const location = await getLocation();
-      if (location) {
-        await setCityAndCountry(location);
-      } else {
-        await AsyncStorage.setItem('city', 'Groningen');
-        await AsyncStorage.setItem('country', 'Netherlands');
-      }
+      //const location = await getLocation();
+      //if (location) {
+      //  await setCityAndCountry(location);
+      //} else {
+      await AsyncStorage.setItem('city', 'Groningen');
+      await AsyncStorage.setItem('country', 'Netherlands');
+      //}
     };
+
+    const retrieveLocation = async () => {
+      const city = await AsyncStorage.getItem('city');
+      const country = await AsyncStorage.getItem('country');
+      return {city, country};
+    }
 
     const checkAladhan = async () => {
       // Prayer times for previous, current and next month
@@ -164,6 +172,26 @@ export default function App() {
 
       if(update) {
         await AsyncStorage.setItem('Aladhan', JSON.stringify(aladhan));
+      }
+    };
+
+    const retrieveDb = async () => {
+      const monthYear = `${new Date().getMonth() + 1}-${new Date().getFullYear()}`;
+      const querySnapshot = await getDocs(collection(db, 'prayerTimes'));
+      querySnapshot.forEach((doc) => {
+        if (doc.id === monthYear) {
+          const data = doc.data();
+          console.log(data);
+        }
+      });
+    };
+
+    const checkPrayerTimes = async () => {
+      const { city, country } = await retrieveLocation();
+      if (city == 'Groningen' && country == 'Netherlands') {
+        retrieveDb();
+      } else {
+       checkAladhan();
       }
     };
 
@@ -199,6 +227,7 @@ export default function App() {
 
     checkStorage();
     checkAladhan();
+    //checkPrayerTimes();
     checkHijri();
   }, []);
 

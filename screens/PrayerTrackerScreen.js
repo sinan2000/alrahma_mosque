@@ -56,8 +56,8 @@ export default function PrayerTrackerScreen({ route }) {
     };
 
     const calculateBarWidth = () => {
-        const filledWidth = calculatePrayersCompleted() / 100 * maxBarWidth;
-        return filledWidth;
+        const filledWidth = calculatePrayersCompleted();
+        return !isNaN(filledWidth) ? filledWidth / 100 * maxBarWidth : 0;
     }
 
     const PrayerNamesHeader = () => {

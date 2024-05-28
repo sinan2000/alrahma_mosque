@@ -5,11 +5,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
-import sunIcon from '../assets/sun.png';
-import moonIcon from '../assets/moon.png';
 import { PrayerContext } from '../PrayerContext';
 import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, isOffsetDate, getDayOfYear} from '../utils';
 import { useTranslation } from 'react-i18next';
+import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import i18n from '../i18n';
 
 const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
@@ -134,25 +133,6 @@ export default function PrayerTimesScreen( { navigation }) {
     }
   };
 
-  const getStelarPosition = () => {
-    // Styling for stelar object based on current prayer
-    let style;
-    switch (nextPrayer) {
-      case 'Dhuhr':
-        style = { alignSelf: 'flex-start' };
-        return { source: sunIcon, style: style };
-      case 'Asr':
-        style = { alignSelf: 'center' };
-        return { source: sunIcon, style: style };
-      case 'Maghrib':
-        style = { alignSelf: 'flex-end' };
-        return { source: sunIcon, style: style };
-      default:
-        style = { alignSelf: 'center' };
-        return { source: moonIcon, style: style };
-    }
-  };
-
   const isValidToggle = (index) => {
     const today = new Date();
     const isFutureDate = currentDate > today;
@@ -271,7 +251,6 @@ export default function PrayerTimesScreen( { navigation }) {
     getNextPrayer();
   }, [prayerTimes]);
 
-  const celestialBody = getStelarPosition();
   return (
     <LinearGradient {...linearGradientProps()}>
       <StatusBar style="auto" />
@@ -279,7 +258,7 @@ export default function PrayerTimesScreen( { navigation }) {
       <View style={styles.container}>
 
         <View style={styles.celestialContainer}>
-          <Image source={celestialBody.source} style={[styles.stelar, celestialBody.style]} />
+          <Image source={require('../assets/logo.png')} style={styles.stelar} />
         </View>
 
         <View style={styles.upperRow}>
@@ -351,9 +330,9 @@ const styles = StyleSheet.create({
   linearGradient: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingHorizontal: width_scale * 4.5,
-    paddingTop: height_scale * 2,
-    paddingBottom: height_scale,
+    paddingHorizontal: wp('5%'),
+    paddingTop: hp('2%'),
+    paddingBottom: hp('1%'),
   },
   container: {
     flex: 1,
@@ -362,13 +341,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: height_scale,
-    marginBottom: height_scale * 2,
+    marginTop: hp('1%'),
+    marginBottom: hp('2%'),
   },
   date: {
     color: 'white',
     textAlign: 'center',
-    fontSize: width_scale * 3.75,
+    fontSize: wp('3.75%'),
   },
   prayerContainer: {
     flex: 1,
@@ -377,19 +356,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: height_scale * 1.25,
-    marginHorizontal: -width_scale * 4.5,
+    paddingVertical: hp('1.3%'),
+    marginHorizontal: - wp('4.5%'),
     backgroundColor: 'transparent',
   },
   prayer: {
-    fontSize: width_scale * 4.67,
+    fontSize: wp('4.67%'),
     color: 'white',
-    marginLeft: width_scale * 4.5,
+    marginLeft: wp('4.5%'),
   },
   time: {
-    fontSize: width_scale * 4.67,
+    fontSize: wp('4.67%'),
     color: 'white',
-    paddingRight: width_scale * 2.25,
+    paddingRight: wp('2.25%'),
   },
   bottomRow:{
     flexDirection: 'row',
@@ -403,30 +382,30 @@ const styles = StyleSheet.create({
   },
   location: {
     color: 'white',
-    fontSize: width_scale * 3.75,
+    fontSize: wp('3.75%'),
   },
   separator: {
     color: 'white',
-    fontSize: width_scale * 3.75,
+    fontSize: wp('3.75%'),
   },
   nextPrayer: {
-    fontSize: width_scale * 3.75,
+    fontSize: wp('3.75%'),
     color: 'white',
   },
   celestialContainer: {
-    height: height_scale * 20,
+    height: hp('15%'),
     justifyContent: 'center',
     alignItems: 'center',
   },
   stelar: {
-    width: width_scale * 23,
-    height: height_scale * 10,
+    width: wp('23%'),
+    height: hp('10%'),
     resizeMode: 'contain',
     bottom: 0,
   },
   checkButton: {
-    width: height_scale * 2.6,
-    height: height_scale * 2.6,
+    width: hp('2.6%'),
+    height: hp('2.6%'),
     borderWidth: 1,
     borderColor: 'black',
     justifyContent: 'center',
@@ -440,7 +419,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginRight: width_scale * 4.5,
+    marginRight: wp('4.5%'),
   },
   nextPrayerFocus: {
     backgroundColor: '#0e9d87',
