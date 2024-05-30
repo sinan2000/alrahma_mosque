@@ -10,13 +10,15 @@ const window = Dimensions.get('window');
 const height_scale = window.height / 100;
 const width_scale = window.width / 100;
 
-const Item = ( {arabic, english, pronunciation, title, isDhikr, onIncrement, onReset, count } ) => {
+const Item = ( {arabic, english, pronunciation, title, isDhikr, onIncrement, onReset, count, introduction, source } ) => {
     return (
         <View style={styles.itemContainer}>
             {isDhikr && <Text style={styles.boldTitle}>{title}</Text>}
+            {introduction && <Text style={styles.introductionText}>{introduction}</Text>}
             <Text style={styles.arabicText}>{arabic}</Text>
             <Text style={styles.englishText}>{english}</Text>
             <Text style={styles.pronunciationText}>{pronunciation}</Text>
+            <Text style={styles.sourceText}>{source}</Text>
             {isDhikr && (
                 <View style={styles.counterContainer}>
                     <Text style={styles.addButtonLabel}>Click to add</Text>
@@ -181,6 +183,8 @@ export default function DuaScreen() {
                     onIncrement={() => incrementCounter(index)}
                     onReset={() => resetCounter(index)}
                     count={counters[index]}
+                    introduction={item.introduction}
+                    source={item.source}
                 />
             ))}
         </ScrollView>
@@ -266,5 +270,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         width: '100%',
         marginTop: height_scale * 0.5,
+    },
+    sourceText: {
+        fontSize: width_scale * 3.3,
+        color: 'gray',
+        textAlign: 'right',
+        marginTop: height_scale * 0.5,
+    },
+    introductionText: {
+        fontSize: width_scale * 3.3,
+        color: 'black',
+        fontStyle: 'italic',
+        marginBottom: height_scale * 0.5,
     },
   });

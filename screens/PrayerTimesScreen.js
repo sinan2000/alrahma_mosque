@@ -1,12 +1,11 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
 import { PrayerContext } from '../PrayerContext';
-import { getKeyForMonth, getKeyForNextImsak, fetchAndStorePrayerTimes, getKeysToFetch, isOffsetDate, getDayOfYear} from '../utils';
+import { isOffsetDate, getDayOfYear} from '../utils';
 import { useTranslation } from 'react-i18next';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import i18n from '../i18n';
@@ -122,8 +121,13 @@ export default function PrayerTimesScreen( { navigation }) {
     const prayerSeconds = Object.entries(times[currentDate.getMonth()].data[currentDate.getDate() - 1])
       .filter(([prayer, time]) => prayer !== 'day')
       .map(([prayer, time]) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return [prayer, hours * 3600 + minutes * 60];
+      const adjustedTime = adjustForSummerTime(time);
+      const [hours, minutes] = adjustedTime.split(':').map(Number);
+      if (prayer === 'imsak' && hours === 0) {
+        return [prayer, 24*3600 + minutes * 60];
+      } else {
+        return [prayer, hours * 3600 + minutes * 60];
+      }
     });
     console.log(prayerSeconds);
     const next = prayerSeconds.find(([_, prayerTime]) => prayerTime > seconds);
@@ -154,6 +158,21 @@ export default function PrayerTimesScreen( { navigation }) {
       setTimeToNextPrayer(formattedTime);
     }, 1000);
     return countdownRef.current;
+  }
+
+  const isSummerTime = (currentDate) => {
+    const jan = new Date(currentDate.getFullYear(), 0, 1);
+    const jul = new Date(currentDate.getFullYear(), 6, 1);
+    const stdTimezoneOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+    return currentDate.getTimezoneOffset() < stdTimezoneOffset;
+  };
+
+  const adjustForSummerTime = (time) => {
+    if (isSummerTime(currentDate)) {
+      const [hours, minutes] = time.split(':').map(Number);
+      return `${String((hours + 1) % 24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+    return time;
   }
 
   useEffect(() => {
@@ -216,11 +235,12 @@ export default function PrayerTimesScreen( { navigation }) {
             const dayOfYear = getDayOfYear(currentDate) - 1;
             const isChecked = index != undefined ? checkedPrayer[year][dayOfYear][index] : null;
             const isNextPrayer = prayer === nextPrayer && (nextPrayer === 'Imsak' ? isOffsetDate(currentDate, 1) : isOffsetDate(currentDate, 0));
+            const adjustedTime = adjustForSummerTime(time);
             return (
             <View key={prayer} style={[styles.prayerRow, isNextPrayer ? styles.nextPrayerFocus : {}]}>
               <Text style={styles.prayer}>{prayer.charAt(0).toUpperCase() + prayer.slice(1) }</Text>
               <View style={styles.timeAndCheckContainer}>
-                <Text style={[styles.time, prayer === 'sunrise' && {marginRight: checkButtonWidth}]}>{time}</Text>
+                <Text style={[styles.time, prayer === 'sunrise' && {marginRight: checkButtonWidth}]}>{adjustedTime}</Text>
                 {prayer !== 'sunrise' && (
                    <CheckButton 
                     isChecked={isChecked} 
