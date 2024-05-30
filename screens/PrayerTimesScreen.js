@@ -12,126 +12,25 @@ import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-nativ
 import i18n from '../i18n';
 
 const gridNames = ['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'];
-const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 export default function PrayerTimesScreen( { navigation }) {
-  const [city, setCity] = useState('');
-  const [prayerTimes, setPrayerTimes] = useState(null);
+  const times = require('../times.json');
   const [nextPrayer, setNextPrayer] = useState('');
   const [timeToNextPrayer, setTimeToNextPrayer] = useState('');
-  const [gregorianDate, setGregorianDate] = useState('');
-  const [hijriDate, setHijriDate] = useState('');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [gregorianDate, setGregorianDate] = useState('');
   const [checkButtonWidth, setCheckButtonWidth] = useState(0);
   const {checkedPrayer, loading, togglePrayer, checkPrayedForDate} = useContext(PrayerContext);
   const countdownRef = useRef(null);
   const { t } = useTranslation();
 
-  const getNextPrayer = () => {
-    // Gets the next prayer from the current time
-    const now = new Date();
-    const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-    const prayerSeconds = Object.entries(prayerTimes).map(([prayer, time]) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return [prayer, hours * 3600 + minutes * 60];
-    });
-
-    const next = prayerSeconds.find(([_, prayerTime]) => prayerTime > currentSeconds);
-
-    if (next) {
-      setNextPrayer(next[0]);
-      startCountdown(next[1] - currentSeconds);
-    } else {
-      setNextPrayer('Imsak');
-      getNextImsakTime().then(nextImsak => {
-        startCountdown(nextImsak + 24 * 3600 - currentSeconds);
-      });
-    }
-  }
-
-  const getNextImsakTime = async () => {
-    // Gets number of seconds until next imsak time
-    const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
-    const date = new Date();
-    const day = date.getDate();
-    const key = getKeyForNextImsak();
-    const imsakTime = data[key][day].timings.Imsak.split(' ')[0];
-
-    const [hours, minutes] = imsakTime.split(':').map(Number);
-    const imsakSeconds = hours * 3600 + minutes * 60;
-    return imsakSeconds;
-  };
-
-  const startCountdown = (timeToNextPrayer) => {
-    // Sets countdown to next prayer
-    clearInterval(countdownRef.current);
-
-    countdownRef.current = setInterval(() => {
-      timeToNextPrayer--;
-
-      if (timeToNextPrayer <= 0) {
-        clearInterval(countdownRef.current);
-        getNextPrayer();
-        return;
-      }
-
-      const hours = Math.floor(timeToNextPrayer / 3600);
-      const minutes = Math.floor((timeToNextPrayer % 3600) / 60);
-      const seconds = (timeToNextPrayer % 60);
-
-      const formattedTime = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-      setTimeToNextPrayer(formattedTime);
-    }, 1000);
-
-    return countdownRef.current;
-  }
-
-  const checkTimesForNewDate = async (date) => {
-    // Checks if the prayer times for the new date are available
-    const aladhan = JSON.parse(await AsyncStorage.getItem('Aladhan')) || {};
-    const keysToFetch = getKeysToFetch(date);
-    let update = false;
-    for (const key of keysToFetch) {
-      if (!aladhan[key]) {
-        await fetchAndStorePrayerTimes(key, aladhan);
-        update = true;
-      }
-    }
-    if(update) {
-      await AsyncStorage.setItem('Aladhan', JSON.stringify(aladhan));
-    }
-  };
-
   const changeDay = (direction) => {
-    // Changes the selected day
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + direction);
-    checkTimesForNewDate(newDate);
     checkPrayedForDate(newDate);
     setCurrentDate(newDate);
-  };
-
-  const linearGradientProps = () => {
-    // Background color based on current prayer
-    let colors;
-    if (nextPrayer === 'Sunrise') {
-        colors = ['#c08423', '#aa7f81']
-    } else if (nextPrayer === 'Dhuhr') {
-        colors = ['#a8d1f6', '#bbdaff']
-    } else if (nextPrayer === 'Asr') {
-        colors = ['#75a1f8', '#2d59b5']
-    } else if (nextPrayer === 'Maghrib') {
-        colors = ['#fa9e66', '#f45c43']
-    } else {
-        colors = ['#12232b', '#3a4881']
-    }
-
-    return {
-      colors: colors,
-      style: styles.linearGradient
-    }
-  };
+  }
 
   const isValidToggle = (index) => {
     const today = new Date();
@@ -144,14 +43,35 @@ export default function PrayerTimesScreen( { navigation }) {
       return index <= current_index;
     }
     return true;
-  };
+  }
 
   const updateCheckedPrayer = async (index) => {
-    if (!isValidToggle(index)) return;
+    if(!isValidToggle(index)) return;
     const year = currentDate.getFullYear();
     const dayOfYear = getDayOfYear(currentDate) - 1;
     togglePrayer(year, dayOfYear, index);
-  };
+  }
+
+  const linearGradientProps = () => {
+    // Background color based on current prayer
+    let colors;
+    if (nextPrayer === 'sunrise') {
+        colors = ['#c08423', '#aa7f81']
+    } else if (nextPrayer === 'dhuhr') {
+        colors = ['#a8d1f6', '#bbdaff']
+    } else if (nextPrayer === 'asr') {
+        colors = ['#75a1f8', '#2d59b5']
+    } else if (nextPrayer === 'maghrib') {
+        colors = ['#fa9e66', '#f45c43']
+    } else {
+        colors = ['#12232b', '#3a4881']
+    }
+
+    return {
+      colors: colors,
+      style: styles.linearGradient
+    }
+  }
 
   const CheckButton = ({ isChecked, onPress }) => (
     <TouchableOpacity 
@@ -194,62 +114,66 @@ export default function PrayerTimesScreen( { navigation }) {
     }
 
     return weekData;
+  };
+
+  const getNextPrayer = () => {
+    const now = new Date();
+    const seconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const prayerSeconds = Object.entries(times[currentDate.getMonth()].data[currentDate.getDate() - 1])
+      .filter(([prayer, time]) => prayer !== 'day')
+      .map(([prayer, time]) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return [prayer, hours * 3600 + minutes * 60];
+    });
+    console.log(prayerSeconds);
+    const next = prayerSeconds.find(([_, prayerTime]) => prayerTime > seconds);
+    if (next) {
+      setNextPrayer(next[0]);
+      startCountdown(next[1] - seconds);
+    } else {
+      setNextPrayer('fajr');
+      getNextImsakTime().then(nextImsak => {
+        startCountdown(nextImsak + 24*3600 - seconds);
+      });
+    }
+  }
+
+  const startCountdown = (timeToPrayer) => {
+    clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      timeToPrayer--;
+      if(timeToPrayer <= 0){
+        clearInterval(countdownRef.current);
+        getNextPrayer();
+        return;
+      }
+      const hours = Math.floor(timeToPrayer / 3600);
+      const minutes = Math.floor((timeToPrayer % 3600) / 60);
+      const seconds = timeToPrayer % 60;
+      const formattedTime = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      setTimeToNextPrayer(formattedTime);
+    }, 1000);
+    return countdownRef.current;
   }
 
   useEffect(() => {
-    const fetchInfo = async () => {
-      const city = await AsyncStorage.getItem('city');
-      setCity(city);
-    };
-
-    fetchInfo();
-
     return () => {
-      if (countdownRef.current) {
+      if(countdownRef.current){
         clearInterval(countdownRef.current);
       }
-    };
+    }
   }, []);
 
   useEffect(() => {
-    const fetchInfo = async () => {
-      const data = JSON.parse(await AsyncStorage.getItem('Aladhan'));
-      const key = getKeyForMonth(currentDate);
-      const day = currentDate.getDate() - 1;
+    const options = { day: 'numeric', month: 'long' };
+    const locale = i18n.language === "en" ? 'en-GB' : 'nl-NL';
+    
+    setGregorianDate(currentDate.toLocaleDateString(locale, options));
 
-      setPrayerTimes({
-        "Imsak": data[key][day].timings.Imsak.split(' ')[0],
-        "Sunrise": data[key][day].timings.Sunrise.split(' ')[0],
-        "Dhuhr": data[key][day].timings.Dhuhr.split(' ')[0],
-        "Asr": data[key][day].timings.Asr.split(' ')[0],
-        "Maghrib": data[key][day].timings.Maghrib.split(' ')[0],
-        "Isha": data[key][day].timings.Isha.split(' ')[0],
-      });
-
-      const hijriInfo = data[key][day].date.hijri;
-      setHijriDate(`${hijriInfo.day} ${hijriInfo.month.en} ${hijriInfo.year} ${hijriInfo.designation.abbreviated}`);
-
-      const formatDate = (date) => {
-        const options = { day: 'numeric', month: 'long'};
-        const locale = `${i18n.language}-${i18n.language === 'nl' ? 'NL' : 'GB'}`;
-        return date.toLocaleDateString(locale, options);
-      }
-      
-      setGregorianDate(formatDate(currentDate));
-    };
-
-    fetchInfo();
-  }, [currentDate]);
-
-  useEffect(() => {
     const isToday = isOffsetDate(currentDate, 0);
-
-    if (!isToday || !prayerTimes)
-    {
-      return;
-    }
+    if (!isToday) return;
     getNextPrayer();
-  }, [prayerTimes]);
+  }, [currentDate]);
 
   return (
     <LinearGradient {...linearGradientProps()}>
@@ -262,7 +186,7 @@ export default function PrayerTimesScreen( { navigation }) {
         </View>
 
         <View style={styles.upperRow}>
-          <Text style={styles.location}>{city}</Text>
+          <Text style={styles.location}>Groningen</Text>
         </View>
 
         <View style={styles.dateRow}>
@@ -274,7 +198,6 @@ export default function PrayerTimesScreen( { navigation }) {
 
           <View>
             <Text style={styles.date}>{gregorianDate}</Text>
-            <Text style={styles.date}>{hijriDate}</Text>
           </View>
 
           <TouchableOpacity
@@ -283,9 +206,11 @@ export default function PrayerTimesScreen( { navigation }) {
             <FontAwesome name="angle-right" size={45} color="white" />
           </TouchableOpacity>
         </View>
-
         <View style={styles.prayerContainer}>
-          {prayerTimes && !loading && Object.keys(prayerTimes).length > 0 && Object.entries(prayerTimes).map(([prayer, time]) => {
+          {!loading && Object.entries(times[currentDate.getMonth()].data[currentDate.getDate() - 1]).map(([prayer, time]) => {
+            if (prayer === 'day') {
+              return;
+            }
             const index = prayers.indexOf(prayer);
             const year = currentDate.getFullYear();
             const dayOfYear = getDayOfYear(currentDate) - 1;
@@ -293,10 +218,10 @@ export default function PrayerTimesScreen( { navigation }) {
             const isNextPrayer = prayer === nextPrayer && (nextPrayer === 'Imsak' ? isOffsetDate(currentDate, 1) : isOffsetDate(currentDate, 0));
             return (
             <View key={prayer} style={[styles.prayerRow, isNextPrayer ? styles.nextPrayerFocus : {}]}>
-              <Text style={styles.prayer}>{prayer}</Text>
+              <Text style={styles.prayer}>{prayer.charAt(0).toUpperCase() + prayer.slice(1) }</Text>
               <View style={styles.timeAndCheckContainer}>
-                <Text style={[styles.time, prayer === 'Sunrise' && {marginRight: checkButtonWidth}]}>{time}</Text>
-                {prayer !== 'Sunrise' && (
+                <Text style={[styles.time, prayer === 'sunrise' && {marginRight: checkButtonWidth}]}>{time}</Text>
+                {prayer !== 'sunrise' && (
                    <CheckButton 
                     isChecked={isChecked} 
                     onPress={() => updateCheckedPrayer(index)} 
@@ -307,7 +232,6 @@ export default function PrayerTimesScreen( { navigation }) {
             );
           })}
         </View>
-        
         <View style={styles.bottomRow}>
           <Text style={styles.nextPrayer}>{t('next')} {timeToNextPrayer}</Text>
         </View>
