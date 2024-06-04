@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Dimensions } from 'react-native';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import PrayerGrid from '../components/PrayerGrid';
@@ -23,6 +23,7 @@ export default function PrayerTimesScreen( { navigation }) {
   const {checkedPrayer, loading, togglePrayer, checkPrayedForDate} = useContext(PrayerContext);
   const countdownRef = useRef(null);
   const { t } = useTranslation();
+  const [gridHeight, setGridHeight] = useState(0); 
 
   const changeDay = (direction) => {
     const newDate = new Date(currentDate);
@@ -129,7 +130,6 @@ export default function PrayerTimesScreen( { navigation }) {
         return [prayer, hours * 3600 + minutes * 60];
       }
     });
-    console.log(prayerSeconds);
     const next = prayerSeconds.find(([_, prayerTime]) => prayerTime > seconds);
     if (next) {
       setNextPrayer(next[0]);
@@ -202,12 +202,10 @@ export default function PrayerTimesScreen( { navigation }) {
 
         <View style={styles.celestialContainer}>
           <Image source={require('../assets/logo.png')} style={styles.stelar} />
-        </View>
-
-        <View style={styles.upperRow}>
           <Text style={styles.location}>Groningen</Text>
         </View>
 
+        <View style={styles.prayerContainer}>
         <View style={styles.dateRow}>
           <TouchableOpacity
             onPress={() => changeDay(-1)}
@@ -225,7 +223,6 @@ export default function PrayerTimesScreen( { navigation }) {
             <FontAwesome name="angle-right" size={45} color="white" />
           </TouchableOpacity>
         </View>
-        <View style={styles.prayerContainer}>
           {!loading && Object.entries(times[currentDate.getMonth()].data[currentDate.getDate() - 1]).map(([prayer, time]) => {
             if (prayer === 'day') {
               return;
@@ -255,13 +252,22 @@ export default function PrayerTimesScreen( { navigation }) {
         <View style={styles.bottomRow}>
           <Text style={styles.nextPrayer}>{t('next')} {timeToNextPrayer}</Text>
         </View>
-
-        {!loading && 
-          <PrayerGrid 
-            prayerTimes={gridData()} 
-            navigation={navigation}
-            nextPrayer={nextPrayer}
-          />}
+        
+        <View 
+          style={{flex: 1}}
+          onLayout={(event) => {
+            const { height } = event.nativeEvent.layout;
+            setGridHeight(height);
+          }}  
+        >
+          {!loading && 
+            <PrayerGrid 
+              prayerTimes={gridData()} 
+              navigation={navigation}
+              nextPrayer={nextPrayer}
+              gridHeight={gridHeight}
+            />}
+        </View>
       </View>
     </LinearGradient>
   );
@@ -294,13 +300,13 @@ const styles = StyleSheet.create({
     fontSize: wp('3.75%'),
   },
   prayerContainer: {
-    flex: 1,
+    flexShrink: 1,
   },
   prayerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: hp('1.3%'),
+    paddingVertical: hp('1%'),
     marginHorizontal: - wp('4.5%'),
     backgroundColor: 'transparent',
   },
@@ -318,11 +324,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  upperRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    margin: hp('1%'),
   },
   location: {
     color: 'white',
@@ -337,7 +339,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   celestialContainer: {
-    height: hp('15%'),
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -132,5 +132,6 @@
     "donations2": "Doneer aan het Islamitisch Centrum Al-Rahma Groningen Stichting",
     "language": "Taal veranderen",
     "english": "Engels",
-    "dutch": "Nederlands"
+    "dutch": "Nederlands",
+    "notconnected": "U bent niet verbonden met internet. Maak verbinding en probeer het opnieuw."
 }

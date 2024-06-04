@@ -21,6 +21,7 @@ export default function HijriScreen() {
 
     useEffect(() => {
         const fetchHijriData = async () => {
+            try{
             const today = new Date();
             const date = await getHijriDate(today);
             setHijriDate(date);
@@ -29,6 +30,9 @@ export default function HijriScreen() {
             const storage = await AsyncStorage.getItem('Hijri') || '{}';
             let hijri = JSON.parse(storage);
             setHijriCalendar(hijri);
+            } catch (error) {
+                alert(t('notconnected'));
+            }
         };
 
         fetchHijriData();
@@ -36,6 +40,7 @@ export default function HijriScreen() {
 
     const fetchAndStoreHijriData = async (year, month) => {
         const { calendar, appendix } = await getMonthlyCalendar(year, month);
+
         const newHijri = {...hijriCalendar};
         if (!newHijri[year]) {
             newHijri[year] = {};

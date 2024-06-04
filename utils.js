@@ -1,6 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
 
 function getKeyForMonth(date) {
     const year = date.getFullYear();

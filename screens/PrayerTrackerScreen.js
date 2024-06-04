@@ -90,16 +90,15 @@ export default function PrayerTrackerScreen({ route }) {
     };
 
     const isValidToggle = (dayIndex, prayerIndex) => {
-
+        console.log(nextPrayer);
         const today = new Date();
         const day = new Date(year, currentDate.getMonth(), dayIndex + 1);
         const isFutureDate = day > today;
         if (isFutureDate) {
             return false;
         }
-        console.log(day.toDateString(), today.toDateString());
         if(day.toDateString() === today.toDateString()) {
-            const prayers = ['Imsak', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
             const current_index = nextPrayer ? prayers.indexOf(nextPrayer) - 1 : 5;
             return prayerIndex <= current_index;
         }
