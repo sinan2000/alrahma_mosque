@@ -38,9 +38,9 @@ async function fetchPrayerTimesFromAPI(monthKey) {
     const [part1, part2] = monthKey.split('_');
     const year = parseInt(part1, 10);
     const month = parseInt(part2, 10);
-    const response = await fetch(`http://api.aladhan.com/v1/calendarByCity/${year}/${month}?city=${city}&country=${country}&method=2`);
+    const response = await fetch(`https://api.aladhan.com/v1/calendarByCity/${year}/${month}?city=${city}&country=${country}&method=2`);
     while (!response.ok) {
-       response = await fetch(`http://api.aladhan.com/v1/calendarByCity/${year}/${month}?city=${city}&country=${country}&method=2`);
+       response = await fetch(`https://api.aladhan.com/v1/calendarByCity/${year}/${month}?city=${city}&country=${country}&method=2`);
     }
     const data = await response.json();
     return data.data;
@@ -103,7 +103,7 @@ async function getHijriDate (date) {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const day = date.getDate();
-    const response = await fetch(`http://api.aladhan.com/v1/gToH?date=${day}-${month}-${year}`);
+    const response = await fetch(`https://api.aladhan.com/v1/gToH?date=${day}-${month}-${year}`);
     const data = await response.json();
     const hijriDate = data.data.hijri.date;
     const result = getEachDateIndex(hijriDate);
@@ -111,7 +111,7 @@ async function getHijriDate (date) {
 };
 
 async function getMonthlyCalendar (hijriYear, hijriMonth) {
-    const response = await fetch(`http://api.aladhan.com/v1/hToGCalendar/${hijriMonth}/${hijriYear}`);
+    const response = await fetch(`https://api.aladhan.com/v1/hToGCalendar/${hijriMonth}/${hijriYear}`);
     const json = await response.json();
     const apiData = json.data;
     const calendar = [];

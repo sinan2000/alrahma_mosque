@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mosque",
+    "name": "Al Rahma",
     "slug": "mosque",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location to determine the direction to the Kaaba.",
         "NSLocationAlwaysUsageDescription": "This app needs access to your location to function properly."
-      }
+      },
+      "bundleIdentifier": "com.sinan2000.alrahmamosque"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +26,9 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE" 
       ],
       "package": "com.sinan2000.alrahmamosque"
     },
